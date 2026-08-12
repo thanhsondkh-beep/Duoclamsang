@@ -1388,6 +1388,40 @@ div[class^="tiktok"].--savior-overlay-z-index-reset {
 
     <!-- ADR PAGE -->
     <div class="page" id="page-adr">
+
+      <!-- THỐNG KÊ TỔNG HỢP -->
+      <div id="adr-stats-section" style="margin-bottom:16px;display:none">
+        <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-bottom:12px" id="adr-stat-cards"></div>
+        <div class="card" style="padding:0;overflow:hidden">
+          <div class="card-header" style="padding:10px 16px">
+            <div class="card-title" style="font-size:13px">📊 Tổng hợp báo cáo ADR</div>
+            <div style="display:flex;gap:8px">
+              <button class="btn btn-outline btn-sm" onclick="exportAdrSummaryWord()" style="color:#0d9488;border-color:#5eead4">📄 Xuất Word</button>
+              <button class="btn btn-outline btn-sm" onclick="exportAdrSummaryExcel()" style="color:#16a34a;border-color:#86efac">📊 Xuất Excel</button>
+            </div>
+          </div>
+          <div class="table-wrap">
+            <table>
+              <thead>
+                <tr>
+                  <th style="width:40px">STT</th>
+                  <th>Tên bệnh nhân</th>
+                  <th>Tuổi/Giới</th>
+                  <th>Thuốc nghi ngờ</th>
+                  <th>Biểu hiện ADR</th>
+                  <th>Mức độ</th>
+                  <th>Kết quả</th>
+                  <th>Ngày báo cáo</th>
+                  <th>Người báo cáo</th>
+                  <th>Nơi báo cáo</th>
+                </tr>
+              </thead>
+              <tbody id="adr-summary-table"></tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+
       <div class="card" style="margin-bottom:16px">
         <div class="card-header">
           <div class="card-title">🚨 Danh sách báo cáo ADR</div>
@@ -2533,7 +2567,157 @@ function saveAdr() {
   renderAdrTable();
 }
 
+function renderAdrStats() {
+  const section = document.getElementById('adr-stats-section');
+  const statCards = document.getElementById('adr-stat-cards');
+  const summaryTbody = document.getElementById('adr-summary-table');
+  if (!section || !statCards || !summaryTbody) return;
+
+  if (!adrs.length) { section.style.display = 'none'; return; }
+  section.style.display = 'block';
+
+  // Thống kê
+  const total = adrs.length;
+  const serious = adrs.filter(a => a.severity && (a.severity.includes('Tử vong') || a.severity.includes('Đe dọa') || a.severity.includes('Nhập viện'))).length;
+  const resolved = adrs.filter(a => a.outcome && a.outcome.includes('Hồi phục không')).length;
+  const thisMonth = adrs.filter(a => {
+    const d = a.adrDate || '';
+    const now = new Date();
+    return d.startsWith(`${now.getFullYear()}-${String(now.getMonth()+1).padStart(2,'0')}`);
+  }).length;
+
+  statCards.innerHTML = `
+    <div style="background:#f0fdf4;border:1px solid #6ee7b7;border-radius:10px;padding:12px 16px;text-align:center">
+      <div style="font-size:22px;font-weight:800;color:#0d9488">${total}</div>
+      <div style="font-size:11px;color:#64748b;margin-top:2px">Tổng số báo cáo</div>
+    </div>
+    <div style="background:#fef2f2;border:1px solid #fca5a5;border-radius:10px;padding:12px 16px;text-align:center">
+      <div style="font-size:22px;font-weight:800;color:#dc2626">${serious}</div>
+      <div style="font-size:11px;color:#64748b;margin-top:2px">Nghiêm trọng</div>
+    </div>
+    <div style="background:#f0fdf4;border:1px solid #86efac;border-radius:10px;padding:12px 16px;text-align:center">
+      <div style="font-size:22px;font-weight:800;color:#16a34a">${resolved}</div>
+      <div style="font-size:11px;color:#64748b;margin-top:2px">Đã hồi phục</div>
+    </div>
+    <div style="background:#eff6ff;border:1px solid #93c5fd;border-radius:10px;padding:12px 16px;text-align:center">
+      <div style="font-size:22px;font-weight:800;color:#2563eb">${thisMonth}</div>
+      <div style="font-size:11px;color:#64748b;margin-top:2px">Tháng này</div>
+    </div>`;
+
+  // Bảng tổng hợp — sắp xếp theo ngày mới nhất
+  const sorted = [...adrs].sort((a,b) => (b.adrDate||'').localeCompare(a.adrDate||''));
+  const sevColor = s => !s ? '' : (s.includes('Tử vong')||s.includes('Đe dọa')) ? 'color:#dc2626;font-weight:700' : s.includes('Nhập viện') ? 'color:#d97706;font-weight:700' : 'color:#16a34a';
+
+  summaryTbody.innerHTML = sorted.map((a, i) => `<tr>
+    <td style="text-align:center;font-size:12px">${i+1}</td>
+    <td style="font-weight:600">${a.ptName||'—'}</td>
+    <td style="font-size:12px">${a.ptAge||''}${a.ptGender?' / '+a.ptGender:''}</td>
+    <td style="font-size:12px">${(a.drugs||[]).map(d=>d.name).filter(Boolean).join(', ')||'—'}</td>
+    <td style="font-size:12px;max-width:160px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap" title="${a.description||''}">${a.description||'—'}</td>
+    <td style="font-size:11px;${sevColor(a.severity)}">${a.severity||'—'}</td>
+    <td style="font-size:12px">${a.outcome||'—'}</td>
+    <td style="font-size:12px">${formatDate(a.adrDate)}</td>
+    <td style="font-size:12px;color:var(--muted)">${a.reporter||'—'}</td>
+    <td style="font-size:12px;color:var(--muted)">${a.reportPlace||'—'}</td>
+  </tr>`).join('');
+}
+
+function exportAdrSummaryWord() {
+  if (!adrs.length) { showToast('Chưa có báo cáo ADR nào!', false); return; }
+  const sorted = [...adrs].sort((a,b) => (b.adrDate||'').localeCompare(a.adrDate||''));
+  const border = 'border:1px solid #000;padding:4pt 7pt;font-size:10pt';
+  const thStyle = 'border:1px solid #000;padding:4pt 7pt;background:#0d9488;color:white;font-weight:bold;font-size:10pt;text-align:center';
+
+  const rows = sorted.map((a,i) => `<tr>
+    <td style="${border};text-align:center">${i+1}</td>
+    <td style="${border};font-weight:bold">${a.ptName||'—'}</td>
+    <td style="${border};text-align:center">${a.ptAge||''}${a.ptGender?' / '+a.ptGender:''}</td>
+    <td style="${border}">${(a.drugs||[]).map(d=>d.name).filter(Boolean).join(', ')||'—'}</td>
+    <td style="${border}">${a.description||'—'}</td>
+    <td style="${border}">${a.severity||'—'}</td>
+    <td style="${border}">${a.outcome||'—'}</td>
+    <td style="${border};text-align:center">${formatDate(a.adrDate)}</td>
+    <td style="${border}">${a.reporter||'—'}</td>
+    <td style="${border}">${a.reportPlace||'—'}</td>
+  </tr>`).join('');
+
+  const now = new Date();
+  const html = `<!DOCTYPE html><html><head><meta charset="UTF-8">
+<style>
+  @page { margin:2cm 2cm 2cm 2.5cm; }
+  body { font-family:'Times New Roman',serif; font-size:11pt; margin:0; padding:0; }
+  h2 { text-align:center; font-size:13pt; text-transform:uppercase; margin:4pt 0; }
+  table { width:100%; border-collapse:collapse; }
+</style></head><body>
+<div style="text-align:center;margin-bottom:4pt">
+  <div style="font-weight:bold">BỆNH VIỆN ĐA KHOA HẢI HẬU — KHOA DƯỢC</div>
+</div>
+<h2>TỔNG HỢP BÁO CÁO PHẢN ỨNG CÓ HẠI (ADR)</h2>
+<div style="text-align:center;font-size:10pt;color:#374151;margin-bottom:10pt">
+  Tổng số: <strong>${adrs.length} báo cáo</strong> &nbsp;|&nbsp; Ngày xuất: ${now.toLocaleDateString('vi-VN')}
+</div>
+<table>
+  <thead><tr>
+    <th style="${thStyle};width:4%">STT</th>
+    <th style="${thStyle}">Tên bệnh nhân</th>
+    <th style="${thStyle};width:8%">Tuổi/Giới</th>
+    <th style="${thStyle}">Thuốc nghi ngờ</th>
+    <th style="${thStyle}">Biểu hiện ADR</th>
+    <th style="${thStyle}">Mức độ</th>
+    <th style="${thStyle}">Kết quả</th>
+    <th style="${thStyle};width:9%">Ngày BC</th>
+    <th style="${thStyle}">Người BC</th>
+    <th style="${thStyle}">Nơi BC</th>
+  </tr></thead>
+  <tbody>${rows}</tbody>
+</table>
+<div style="margin-top:24pt;display:flex;justify-content:flex-end">
+  <div style="text-align:center;width:40%">
+    <div style="font-weight:bold">TRƯỞNG KHOA DƯỢC</div>
+    <div style="font-style:italic;font-size:10pt;margin-bottom:40pt">(Ký và ghi rõ họ tên)</div>
+    <div>.................................</div>
+  </div>
+</div>
+</body></html>`;
+
+  const blob = new Blob(['\ufeff'+html], {type:'application/msword;charset=utf-8'});
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url; a.download = `TongHop_ADR_${now.getFullYear()}${String(now.getMonth()+1).padStart(2,'0')}.doc`;
+  a.click(); URL.revokeObjectURL(url);
+  showToast('Đã xuất Word tổng hợp ADR!');
+}
+
+function exportAdrSummaryExcel() {
+  if (!adrs.length) { showToast('Chưa có báo cáo ADR nào!', false); return; }
+  const sorted = [...adrs].sort((a,b) => (b.adrDate||'').localeCompare(a.adrDate||''));
+
+  const headers = ['STT','Tên bệnh nhân','Tuổi','Giới tính','Thuốc nghi ngờ','Biểu hiện ADR','Mức độ nghiêm trọng','Kết quả','Ngày báo cáo','Người báo cáo','Nơi báo cáo','Mã báo cáo'];
+  const esc = v => {
+    if (v == null) return '';
+    const s = String(v).replace(/"/g,'""');
+    return s.includes(',') || s.includes('"') || s.includes('\n') ? `"${s}"` : s;
+  };
+  const rows = sorted.map((a,i) => [
+    i+1, a.ptName||'', a.ptAge||'', a.ptGender||'',
+    (a.drugs||[]).map(d=>d.name).filter(Boolean).join('; ')||'',
+    a.description||'', a.severity||'', a.outcome||'',
+    formatDate(a.adrDate), a.reporter||'', a.reportPlace||'', a.code||''
+  ].map(esc).join(','));
+
+  const csv = [headers.map(esc).join(','), ...rows].join('\r\n');
+  const blob = new Blob(['\ufeff'+csv], {type:'text/csv;charset=utf-8'});
+  const url = URL.createObjectURL(blob);
+  const el = document.createElement('a');
+  el.href = url;
+  const now = new Date();
+  el.download = `TongHop_ADR_${now.getFullYear()}${String(now.getMonth()+1).padStart(2,'0')}.csv`;
+  el.click(); URL.revokeObjectURL(url);
+  showToast('Đã xuất Excel tổng hợp ADR!');
+}
+
 function renderAdrTable() {
+  renderAdrStats();
   const tbody = document.getElementById('adr-table');
   if (!tbody) return;
   if (!adrs.length) {
