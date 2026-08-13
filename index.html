@@ -909,6 +909,11 @@ div[class^="tiktok"].--savior-overlay-z-index-reset {
     <span class="icon">📋</span> Phiếu phân tích
   </div>
 
+  <div class="nav-section">Thông tin thuốc</div>
+  <div class="nav-item" onclick="goPage(&#39;qa&#39;)">
+    <span class="icon">💬</span> Hỏi đáp thuốc
+  </div>
+
   <div class="nav-section">Báo cáo</div>
   <div class="nav-item" onclick="goPage(&#39;report&#39;)">
     <span class="icon">📈</span> Thống kê
@@ -1072,9 +1077,17 @@ div[class^="tiktok"].--savior-overlay-z-index-reset {
     <div class="page" id="page-rounds">
       <div class="card">
         <div class="card-header">
-          <div class="card-title">🚶 Lịch sử đi buồng</div>
-          <div style="display:flex;gap:8px">
-            <select style="width:auto;padding:6px 10px;font-size:12px" onchange="filterRounds(this.value)" id="round-dept-filter">
+          <div class="card-title">📋 Lịch sử can thiệp dược lâm sàng</div>
+          <div style="display:flex;gap:8px;flex-wrap:wrap">
+            <select style="width:auto;padding:6px 10px;font-size:12px" onchange="renderRounds()" id="round-source-filter">
+              <option value="">Tất cả nguồn</option>
+              <option value="di_buong">🚶 Đi buồng nội trú</option>
+              <option value="tham_dinh_don">📝 Thẩm định đơn NT</option>
+              <option value="hoi_chan">🏥 Hội chẩn</option>
+              <option value="tu_van">📞 Tư vấn ĐT/Zalo</option>
+              <option value="khac">📌 Khác</option>
+            </select>
+            <select style="width:auto;padding:6px 10px;font-size:12px" onchange="renderRounds()" id="round-dept-filter">
               <option value="">Tất cả khoa</option>
               <option>Khoa Nội tổng hợp</option>
               <option>Khoa Hồi sức cấp cứu</option>
@@ -1082,7 +1095,7 @@ div[class^="tiktok"].--savior-overlay-z-index-reset {
               <option>Khoa Phụ sản</option>
               <option>Khoa Liên chuyên khoa</option>
             </select>
-            <button class="btn btn-primary btn-sm" onclick="openModal(&#39;modal-round&#39;)">➕ Ghi buồng</button>
+            <button class="btn btn-primary btn-sm" onclick="openModal(&#39;modal-round&#39;)">➕ Ghi can thiệp</button>
           </div>
         </div>
         <div class="table-wrap">
@@ -1090,8 +1103,9 @@ div[class^="tiktok"].--savior-overlay-z-index-reset {
             <thead>
               <tr>
                 <th>Ngày</th>
+                <th>Nguồn</th>
                 <th>Bệnh nhân</th>
-                <th>Khoa</th>
+                <th>Khoa/Đơn</th>
                 <th>Thuốc can thiệp</th>
                 <th>Vấn đề (T)</th>
                 <th>Can thiệp (C)</th>
@@ -1381,6 +1395,13 @@ div[class^="tiktok"].--savior-overlay-z-index-reset {
             <div class="empty"><div class="empty-icon">📋</div><div class="empty-text">Chưa có dữ liệu</div></div>
           </div>
         </div>
+        <!-- Thống kê theo nguồn can thiệp -->
+        <div class="card src-stats-wrap" style="display:none">
+          <div class="card-header">
+            <div class="card-title">📊 Can thiệp theo nguồn (tháng này)</div>
+          </div>
+          <div class="card-body" style="padding:8px 16px" id="stat-by-source"></div>
+        </div>
       </div>
     </div>
 
@@ -1450,6 +1471,60 @@ div[class^="tiktok"].--savior-overlay-z-index-reset {
         </div>
       </div>
     </div>
+
+
+    <!-- QA PAGE: HỎI ĐÁP THUỐC -->
+    <div class="page" id="page-qa">
+
+      <!-- THANH TÌM KIẾM -->
+      <div class="card" style="margin-bottom:12px;border:2px solid #0d9488">
+        <div style="display:flex;align-items:center;gap:10px;padding:4px">
+          <span style="font-size:20px">🔍</span>
+          <input type="text" id="qa-search" placeholder="Tra câu hỏi cũ theo từ khóa — tìm trước khi trả lời..." oninput="searchQA(this.value)"
+            style="flex:1;border:none;outline:none;font-size:15px;background:transparent">
+          <button class="btn btn-primary btn-sm" onclick="openQAForm()" style="white-space:nowrap">✏️ Ghi mới</button>
+        </div>
+      </div>
+
+      <!-- BỘ LỌC -->
+      <div style="display:flex;gap:8px;margin-bottom:12px;flex-wrap:wrap;align-items:center">
+        <select id="qa-filter-topic" onchange="renderQA()" style="padding:7px 10px;font-size:12px;border-radius:8px;border:1.5px solid #e2e8f0">
+          <option value="">Tất cả chủ đề</option>
+          <option value="tuong_tac">⚡ Tương tác thuốc</option>
+          <option value="lieu_dung">💊 Liều dùng</option>
+          <option value="chi_dinh">✅ Chỉ định</option>
+          <option value="hieu_chinh_than">🫘 Hiệu chỉnh liều thận</option>
+          <option value="thai_ky">🤰 Thai kỳ / Cho con bú</option>
+          <option value="bhyt">💳 Phù hợp BHYT</option>
+          <option value="pha_che">🧪 Pha chế / Bảo quản</option>
+          <option value="chong_chi_dinh">🚫 Chống chỉ định</option>
+          <option value="adr_thuc_te">⚠️ ADR thực tế</option>
+          <option value="khac">📌 Khác</option>
+        </select>
+        <select id="qa-filter-dept" onchange="renderQA()" style="padding:7px 10px;font-size:12px;border-radius:8px;border:1.5px solid #e2e8f0">
+          <option value="">Tất cả khoa</option>
+          <option>Khoa Nội tổng hợp</option>
+          <option>Khoa Hồi sức cấp cứu</option>
+          <option>Khoa Ngoại tổng hợp</option>
+          <option>Khoa Phụ sản</option>
+          <option>Khoa Liên chuyên khoa</option>
+        </select>
+        <select id="qa-filter-month" onchange="renderQA()" style="padding:7px 10px;font-size:12px;border-radius:8px;border:1.5px solid #e2e8f0">
+          <option value="">Tất cả thời gian</option>
+        </select>
+        <div id="qa-count-badge" style="margin-left:auto;font-size:12px;color:var(--muted)"></div>
+        <button class="btn btn-outline btn-sm" onclick="exportQAWord()" style="color:#0d9488;border-color:#5eead4;white-space:nowrap">📄 Xuất Word</button>
+      </div>
+
+      <!-- THỐNG KÊ CARDS -->
+      <div id="qa-stats-row" style="display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin-bottom:14px"></div>
+
+      <!-- DANH SÁCH Q&A -->
+      <div id="qa-list">
+        <div class="empty"><div class="empty-icon">💬</div><div class="empty-text">Chưa có câu hỏi nào. Bấm "Ghi mới" để bắt đầu!</div></div>
+      </div>
+
+    </div><!-- end page-qa -->
 
   </div><!-- /content -->
 <!-- /main -->
@@ -1982,11 +2057,128 @@ div[class^="tiktok"].--savior-overlay-z-index-reset {
   </div>
 </div>
 
+<!-- MODAL: HỎI ĐÁP THUỐC -->
+<div class="modal-overlay" id="modal-qa">
+  <div class="modal" style="max-width:680px">
+    <div class="modal-header">
+      <div class="modal-title" id="qa-modal-title">💬 Ghi nhận câu hỏi về thuốc</div>
+      <button class="modal-close" onclick="closeModal(&#39;modal-qa&#39;)">✕</button>
+    </div>
+    <div class="modal-body">
+
+      <div class="divider">Người hỏi</div>
+      <div class="form-grid form-grid-3">
+        <div class="form-group">
+          <label class="form-label">Họ tên / Chức danh</label>
+          <input type="text" id="qa-asker" placeholder="BS. Nguyễn Văn A, ĐD. Trần B...">
+        </div>
+        <div class="form-group">
+          <label class="form-label">Vai trò</label>
+          <select id="qa-asker-role">
+            <option value="bac_si">Bác sĩ</option>
+            <option value="dieu_duong">Điều dưỡng</option>
+            <option value="duoc_si">Dược sĩ</option>
+            <option value="khac">Khác</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label class="form-label">Khoa / Đơn vị</label>
+          <input type="text" id="qa-asker-dept" list="qa-dept-list" placeholder="Chọn hoặc gõ tên khoa..." autocomplete="off">
+          <datalist id="qa-dept-list">
+            <option>Khoa Nội tổng hợp</option>
+            <option>Khoa Hồi sức cấp cứu</option>
+            <option>Khoa Ngoại tổng hợp</option>
+            <option>Khoa Phụ sản</option>
+            <option>Khoa Liên chuyên khoa</option>
+            <option>Khoa Dược</option>
+            <option>Phòng khám ngoại trú</option>
+          </datalist>
+        </div>
+      </div>
+
+      <div class="form-grid form-grid-3" style="margin-top:10px">
+        <div class="form-group">
+          <label class="form-label">Ngày <span class="required">*</span></label>
+          <input type="date" id="qa-date">
+        </div>
+        <div class="form-group">
+          <label class="form-label">Kênh tiếp nhận</label>
+          <select id="qa-channel">
+            <option value="truc_tiep">🤝 Trực tiếp</option>
+            <option value="dien_thoai">📞 Điện thoại</option>
+            <option value="zalo">💬 Zalo</option>
+            <option value="khac">📌 Khác</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label class="form-label">Dược sĩ trả lời</label>
+          <input type="text" id="qa-pharmacist" list="pharmacist-list" placeholder="Tên dược sĩ..." autocomplete="off">
+        </div>
+      </div>
+
+      <div class="divider">Nội dung hỏi đáp</div>
+
+      <!-- Chủ đề -->
+      <div class="form-group">
+        <label class="form-label">Chủ đề <span class="required">*</span></label>
+        <div style="display:flex;flex-wrap:wrap;gap:7px;margin-top:6px" id="qa-topic-select">
+          <label style="display:flex;align-items:center;gap:6px;font-size:13px;cursor:pointer;padding:6px 12px;border:1.5px solid #e2e8f0;border-radius:8px">
+            <input type="radio" name="qa-topic" value="tuong_tac" style="width:14px;height:14px"> ⚡ Tương tác</label>
+          <label style="display:flex;align-items:center;gap:6px;font-size:13px;cursor:pointer;padding:6px 12px;border:1.5px solid #e2e8f0;border-radius:8px">
+            <input type="radio" name="qa-topic" value="lieu_dung" checked style="width:14px;height:14px"> 💊 Liều dùng</label>
+          <label style="display:flex;align-items:center;gap:6px;font-size:13px;cursor:pointer;padding:6px 12px;border:1.5px solid #e2e8f0;border-radius:8px">
+            <input type="radio" name="qa-topic" value="chi_dinh" style="width:14px;height:14px"> ✅ Chỉ định</label>
+          <label style="display:flex;align-items:center;gap:6px;font-size:13px;cursor:pointer;padding:6px 12px;border:1.5px solid #e2e8f0;border-radius:8px">
+            <input type="radio" name="qa-topic" value="hieu_chinh_than" style="width:14px;height:14px"> 🫘 Hiệu chỉnh liều thận</label>
+          <label style="display:flex;align-items:center;gap:6px;font-size:13px;cursor:pointer;padding:6px 12px;border:1.5px solid #e2e8f0;border-radius:8px">
+            <input type="radio" name="qa-topic" value="thai_ky" style="width:14px;height:14px"> 🤰 Thai kỳ/CCB</label>
+          <label style="display:flex;align-items:center;gap:6px;font-size:13px;cursor:pointer;padding:6px 12px;border:1.5px solid #e2e8f0;border-radius:8px">
+            <input type="radio" name="qa-topic" value="bhyt" style="width:14px;height:14px"> 💳 BHYT</label>
+          <label style="display:flex;align-items:center;gap:6px;font-size:13px;cursor:pointer;padding:6px 12px;border:1.5px solid #e2e8f0;border-radius:8px">
+            <input type="radio" name="qa-topic" value="pha_che" style="width:14px;height:14px"> 🧪 Pha chế/BQ</label>
+          <label style="display:flex;align-items:center;gap:6px;font-size:13px;cursor:pointer;padding:6px 12px;border:1.5px solid #e2e8f0;border-radius:8px">
+            <input type="radio" name="qa-topic" value="chong_chi_dinh" style="width:14px;height:14px"> 🚫 Chống chỉ định</label>
+          <label style="display:flex;align-items:center;gap:6px;font-size:13px;cursor:pointer;padding:6px 12px;border:1.5px solid #e2e8f0;border-radius:8px">
+            <input type="radio" name="qa-topic" value="adr_thuc_te" style="width:14px;height:14px"> ⚠️ ADR thực tế</label>
+          <label style="display:flex;align-items:center;gap:6px;font-size:13px;cursor:pointer;padding:6px 12px;border:1.5px solid #e2e8f0;border-radius:8px">
+            <input type="radio" name="qa-topic" value="khac" style="width:14px;height:14px"> 📌 Khác</label>
+        </div>
+      </div>
+
+      <div class="form-group" style="margin-top:12px">
+        <label class="form-label">Câu hỏi <span class="required">*</span></label>
+        <textarea id="qa-question" rows="3" placeholder="Ghi lại câu hỏi của bác sĩ/điều dưỡng..."></textarea>
+      </div>
+
+      <div class="form-group" style="margin-top:10px">
+        <label class="form-label">Câu trả lời / Tư vấn <span class="required">*</span></label>
+        <textarea id="qa-answer" rows="4" placeholder="Ghi nội dung trả lời đầy đủ, có thể kèm liều cụ thể, hướng dẫn, cảnh báo..."></textarea>
+      </div>
+
+      <div class="form-group" style="margin-top:10px">
+        <label class="form-label">Tài liệu tham khảo (tùy chọn)</label>
+        <input type="text" id="qa-reference" placeholder="VD: Dược thư Quốc gia 2022, tr.156 / Micromedex / Hướng dẫn BYT 2024...">
+      </div>
+
+      <div class="form-group" style="margin-top:10px">
+        <label class="form-label">Liên kết bệnh nhân (tùy chọn)</label>
+        <input type="text" id="qa-patient-link" list="qa-patient-list" placeholder="Gõ tên hoặc mã BA..." autocomplete="off">
+        <datalist id="qa-patient-list"></datalist>
+      </div>
+
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-outline" onclick="closeModal(&#39;modal-qa&#39;)">Huỷ</button>
+      <button class="btn btn-primary" onclick="saveQA()">💾 Lưu câu hỏi</button>
+    </div>
+  </div>
+</div>
+
 <!-- MODAL: GHI BUỒNG -->
 <div class="modal-overlay" id="modal-round">
   <div class="modal" style="max-width:720px">
     <div class="modal-header">
-      <div class="modal-title">🚶 Ghi buồng — Phiếu phân tích sử dụng thuốc</div>
+      <div class="modal-title" id="round-modal-title">📋 Ghi nhận can thiệp dược lâm sàng</div>
       <button class="modal-close" onclick="closeModal(&#39;modal-round&#39;)">✕</button>
     </div>
     <div class="modal-body">
@@ -1994,13 +2186,31 @@ div[class^="tiktok"].--savior-overlay-z-index-reset {
         📋 Điền theo mẫu QĐ 3547/QĐ-BYT — Phụ lục 1 &amp; 2
       </div>
 
+      <!-- NGUỒN CAN THIỆP -->
+      <div class="divider">Nguồn can thiệp</div>
+      <div class="form-group">
+        <label class="form-label">Nguồn phát hiện <span class="required">*</span></label>
+        <div style="display:flex;flex-wrap:wrap;gap:8px;margin-top:6px">
+          <label style="display:flex;align-items:center;gap:8px;font-size:13px;cursor:pointer;padding:7px 12px;border:2px solid #0d9488;border-radius:8px;background:#f0fdf4;font-weight:600">
+            <input type="radio" name="r-source" value="di_buong" checked onchange="onSourceChange(this.value)" style="width:15px;height:15px"> 🚶 Đi buồng nội trú</label>
+          <label style="display:flex;align-items:center;gap:8px;font-size:13px;cursor:pointer;padding:7px 12px;border:2px solid #e2e8f0;border-radius:8px">
+            <input type="radio" name="r-source" value="tham_dinh_don" onchange="onSourceChange(this.value)" style="width:15px;height:15px"> 📝 Thẩm định đơn ngoại trú</label>
+          <label style="display:flex;align-items:center;gap:8px;font-size:13px;cursor:pointer;padding:7px 12px;border:2px solid #e2e8f0;border-radius:8px">
+            <input type="radio" name="r-source" value="hoi_chan" onchange="onSourceChange(this.value)" style="width:15px;height:15px"> 🏥 Hội chẩn</label>
+          <label style="display:flex;align-items:center;gap:8px;font-size:13px;cursor:pointer;padding:7px 12px;border:2px solid #e2e8f0;border-radius:8px">
+            <input type="radio" name="r-source" value="tu_van" onchange="onSourceChange(this.value)" style="width:15px;height:15px"> 📞 Tư vấn ĐT/Zalo</label>
+          <label style="display:flex;align-items:center;gap:8px;font-size:13px;cursor:pointer;padding:7px 12px;border:2px solid #e2e8f0;border-radius:8px">
+            <input type="radio" name="r-source" value="khac" onchange="onSourceChange(this.value)" style="width:15px;height:15px"> 📌 Khác</label>
+        </div>
+      </div>
+
       <div class="divider">Thông tin chung</div>
       <div class="form-grid form-grid-3">
         <div class="form-group">
-          <label class="form-label">Ngày đi buồng <span class="required">*</span></label>
+          <label class="form-label">Ngày <span class="required">*</span></label>
           <input type="date" id="r-date">
         </div>
-        <div class="form-group">
+        <div class="form-group" id="r-dept-group">
           <label class="form-label">Khoa <span class="required">*</span></label>
           <select id="r-dept" onchange="filterPatientByDept(this.value)">
             <option>Khoa Nội tổng hợp</option>
@@ -2020,7 +2230,8 @@ div[class^="tiktok"].--savior-overlay-z-index-reset {
         </div>
       </div>
 
-      <div class="form-grid form-grid-2" style="margin-top:12px">
+      <!-- Bệnh nhân nội trú -->
+      <div id="r-inpatient-group" class="form-grid form-grid-2" style="margin-top:12px">
         <div class="form-group">
           <label class="form-label">Bệnh nhân <span class="required">*</span></label>
           <select id="r-patient">
@@ -2033,7 +2244,25 @@ div[class^="tiktok"].--savior-overlay-z-index-reset {
         </div>
       </div>
 
-      <div class="divider">Vấn đề liên quan thuốc (Mã T)</div>
+      <!-- Bệnh nhân ngoại trú / tư vấn -->
+      <div id="r-outpatient-group" style="display:none;margin-top:12px">
+        <div class="form-grid form-grid-2">
+          <div class="form-group">
+            <label class="form-label" id="r-ref-label">Mã đơn / STT khám</label>
+            <input type="text" id="r-ref-code" placeholder="VD: DT2026001, STT 35...">
+          </div>
+          <div class="form-group">
+            <label class="form-label">Tên bệnh nhân (nếu có)</label>
+            <input type="text" id="r-outpt-name" placeholder="Họ tên bệnh nhân ngoại trú">
+          </div>
+        </div>
+        <div class="form-group" style="margin-top:8px">
+          <label class="form-label">Thuốc can thiệp <span class="required">*</span></label>
+          <input type="text" id="r-drug-out" placeholder="Hoạt chất (TM)/nồng độ, hàm lượng">
+        </div>
+      </div>
+
+<div class="divider">Vấn đề liên quan thuốc (Mã T)</div>
       <div class="form-group">
         <label class="form-label">Chọn mã vấn đề <span class="required">*</span></label>
         <div class="tag-group" id="t-codes-select">
@@ -2268,6 +2497,7 @@ async function loadFromFirebase() {
 
     refreshAll();
     syncPhieu();
+    loadQAFromFirebase();
     showToast('Đã tải dữ liệu thành công!');
   } catch(e) {
     showToast('Lỗi tải dữ liệu: ' + e.message, false);
@@ -2291,6 +2521,379 @@ async function saveToFirebase(colName, id, data) {
 }
 
 // ─── NAV ──────────────────────────────────────────
+// ═══════════════════════════════════════════════════
+// MODULE: HỎI ĐÁP THUỐC (drug_info_qa)
+// ═══════════════════════════════════════════════════
+
+let qaList = [];   // local cache
+let editingQAId = null;
+let qaSearchQuery = '';
+
+const QA_TOPIC_LABELS = {
+  tuong_tac:      { icon:'⚡', label:'Tương tác thuốc',        color:'#f59e0b' },
+  lieu_dung:      { icon:'💊', label:'Liều dùng',              color:'#0d9488' },
+  chi_dinh:       { icon:'✅', label:'Chỉ định',               color:'#16a34a' },
+  hieu_chinh_than:{ icon:'🫘', label:'Hiệu chỉnh liều thận',   color:'#0284c7' },
+  thai_ky:        { icon:'🤰', label:'Thai kỳ/CCB',            color:'#ec4899' },
+  bhyt:           { icon:'💳', label:'Phù hợp BHYT',           color:'#6366f1' },
+  pha_che:        { icon:'🧪', label:'Pha chế/Bảo quản',       color:'#8b5cf6' },
+  chong_chi_dinh: { icon:'🚫', label:'Chống chỉ định',         color:'#ef4444' },
+  adr_thuc_te:    { icon:'⚠️', label:'ADR thực tế',            color:'#f97316' },
+  khac:           { icon:'📌', label:'Khác',                   color:'#64748b' },
+};
+
+const QA_CHANNEL_LABELS = {
+  truc_tiep:  '🤝 Trực tiếp',
+  dien_thoai: '📞 Điện thoại',
+  zalo:       '💬 Zalo',
+  khac:       '📌 Khác',
+};
+
+const QA_ROLE_LABELS = {
+  bac_si:    'Bác sĩ',
+  dieu_duong:'Điều dưỡng',
+  duoc_si:   'Dược sĩ',
+  khac:      'Khác',
+};
+
+function openQAForm(id = null) {
+  editingQAId = id;
+  const today = new Date().toISOString().split('T')[0];
+
+  if (id) {
+    const q = qaList.find(x => x.id === id);
+    if (!q) return;
+    document.getElementById('qa-modal-title').textContent = '✏️ Chỉnh sửa câu hỏi';
+    document.getElementById('qa-asker').value       = q.askerName || '';
+    document.getElementById('qa-asker-role').value  = q.askerRole || 'bac_si';
+    document.getElementById('qa-asker-dept').value  = q.askerDept || '';
+    document.getElementById('qa-date').value        = q.date || today;
+    document.getElementById('qa-channel').value     = q.channel || 'truc_tiep';
+    document.getElementById('qa-pharmacist').value  = q.pharmacist || '';
+    document.getElementById('qa-question').value    = q.question || '';
+    document.getElementById('qa-answer').value      = q.answer || '';
+    document.getElementById('qa-reference').value   = q.reference || '';
+    const topicRadio = document.querySelector(`[name="qa-topic"][value="${q.topic}"]`);
+    if (topicRadio) topicRadio.checked = true;
+  } else {
+    document.getElementById('qa-modal-title').textContent = '💬 Ghi nhận câu hỏi về thuốc';
+    document.getElementById('qa-date').value = today;
+    document.getElementById('qa-asker').value = '';
+    document.getElementById('qa-question').value = '';
+    document.getElementById('qa-answer').value = '';
+    document.getElementById('qa-reference').value = '';
+    const def = document.querySelector('[name="qa-topic"][value="lieu_dung"]');
+    if (def) def.checked = true;
+  }
+
+  // Populate datalist bệnh nhân
+  const dl = document.getElementById('qa-patient-list');
+  if (dl) {
+    dl.innerHTML = patients.map(p => `<option value="${p.name} (${p.code})" data-id="${p.id}">`).join('');
+  }
+  // Set giá trị nếu đang edit
+  const ptInput = document.getElementById('qa-patient-link');
+  if (ptInput) {
+    if (id) {
+      const q = qaList.find(x => x.id === id);
+      const linkedPt = q?.relatedPatientId ? patients.find(p => p.id === q.relatedPatientId) : null;
+      ptInput.value = linkedPt ? `${linkedPt.name} (${linkedPt.code})` : (q?.relatedPatientName || '');
+    } else {
+      ptInput.value = '';
+    }
+  }
+
+  openModal('modal-qa');
+}
+
+function saveQA() {
+  const question = document.getElementById('qa-question').value.trim();
+  const answer   = document.getElementById('qa-answer').value.trim();
+  if (!question || !answer) { showToast('Vui lòng nhập câu hỏi và câu trả lời!', false); return; }
+
+  const topic = document.querySelector('[name="qa-topic"]:checked')?.value || 'khac';
+
+  const q = {
+    id:        editingQAId || Date.now(),
+    date:      document.getElementById('qa-date').value,
+    askerName: document.getElementById('qa-asker').value.trim(),
+    askerRole: document.getElementById('qa-asker-role').value,
+    askerDept: document.getElementById('qa-asker-dept').value,
+    channel:   document.getElementById('qa-channel').value,
+    pharmacist:document.getElementById('qa-pharmacist').value.trim() || 'Dược sĩ',
+    topic, question, answer,
+    reference: document.getElementById('qa-reference').value.trim(),
+  };
+
+  // Parse liên kết bệnh nhân từ text input
+  const ptText = document.getElementById('qa-patient-link').value.trim();
+  if (ptText) {
+    // Tìm bệnh nhân khớp tên hoặc mã BA
+    const match = patients.find(p =>
+      ptText.includes(p.code) || ptText.toLowerCase().includes(p.name.toLowerCase())
+    );
+    q.relatedPatientId   = match ? match.id : null;
+    q.relatedPatientName = ptText; // lưu text gốc để hiển thị kể cả khi BN bị xóa
+  } else {
+    q.relatedPatientId   = null;
+    q.relatedPatientName = '';
+  }
+
+  if (editingQAId) {
+    const idx = qaList.findIndex(x => x.id === editingQAId);
+    if (idx >= 0) qaList[idx] = q;
+  } else {
+    qaList.push(q);
+  }
+
+  saveToFirebase('drug_info_qa', q.id, q).catch(() => {});
+  closeModal('modal-qa');
+  renderQA();
+  updateQAMonthFilter();
+  showToast(editingQAId ? 'Đã cập nhật câu hỏi!' : 'Đã lưu câu hỏi!');
+  editingQAId = null;
+}
+
+function deleteQA(id) {
+  const q = qaList.find(x => x.id === id);
+  if (!q || !confirm(`Xóa câu hỏi "${q.question.slice(0,40)}..."?`)) return;
+  qaList = qaList.filter(x => x.id !== id);
+  if (window._deleteDoc && window._doc && window._db)
+    window._deleteDoc(window._doc(window._db, 'drug_info_qa', String(id))).catch(()=>{});
+  renderQA();
+  showToast('Đã xóa câu hỏi!');
+}
+
+function searchQA(val) {
+  qaSearchQuery = val.trim().toLowerCase();
+  renderQA();
+}
+
+function renderQA() {
+  const list   = document.getElementById('qa-list');
+  const badge  = document.getElementById('qa-count-badge');
+  const topicF = document.getElementById('qa-filter-topic')?.value || '';
+  const deptF  = document.getElementById('qa-filter-dept')?.value || '';
+  const monthF = document.getElementById('qa-filter-month')?.value || '';
+
+  let data = [...qaList].sort((a,b) => (b.date||'').localeCompare(a.date||''));
+
+  if (topicF) data = data.filter(q => q.topic === topicF);
+  if (deptF)  data = data.filter(q => q.askerDept === deptF);
+  if (monthF) data = data.filter(q => (q.date||'').startsWith(monthF));
+  if (qaSearchQuery) {
+    data = data.filter(q =>
+      (q.question||'').toLowerCase().includes(qaSearchQuery) ||
+      (q.answer||'').toLowerCase().includes(qaSearchQuery) ||
+      (q.askerName||'').toLowerCase().includes(qaSearchQuery)
+    );
+  }
+
+  if (badge) badge.textContent = `${data.length} câu hỏi`;
+
+  // Stats cards
+  renderQAStats();
+
+  if (!data.length) {
+    list.innerHTML = '<div class="empty"><div class="empty-icon">💬</div><div class="empty-text">Không tìm thấy câu hỏi phù hợp</div></div>';
+    return;
+  }
+
+  list.innerHTML = data.map(q => {
+    const topic = QA_TOPIC_LABELS[q.topic] || QA_TOPIC_LABELS.khac;
+    const channel = QA_CHANNEL_LABELS[q.channel] || q.channel;
+    const role = QA_ROLE_LABELS[q.askerRole] || q.askerRole;
+    const pt = q.relatedPatientId ? patients.find(p => p.id === q.relatedPatientId) : null;
+    const ptDisplay = pt ? `${pt.name} (${pt.code})` : (q.relatedPatientName || '');
+
+    // Highlight từ khóa tìm kiếm
+    const highlight = (text) => {
+      if (!qaSearchQuery || !text) return text || '';
+      return text.replace(new RegExp(`(${qaSearchQuery})`, 'gi'),
+        '<mark style="background:#fef08a;border-radius:3px;padding:0 2px">$1</mark>');
+    };
+
+    return `<div class="card" style="margin-bottom:10px;border-left:4px solid ${topic.color}">
+      <div style="display:flex;justify-content:space-between;align-items:flex-start;gap:10px;margin-bottom:10px">
+        <div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center">
+          <span style="background:${topic.color}20;color:${topic.color};font-size:11px;font-weight:700;padding:3px 10px;border-radius:20px">${topic.icon} ${topic.label}</span>
+          <span style="font-size:11px;color:var(--muted)">${channel}</span>
+          <span style="font-size:11px;color:var(--muted)">📅 ${formatDate(q.date)}</span>
+          ${ptDisplay ? `<span style="font-size:11px;background:#e0f2fe;color:#0369a1;padding:2px 8px;border-radius:20px">🔗 ${ptDisplay}</span>` : ''}
+        </div>
+        <div style="display:flex;gap:6px;flex-shrink:0">
+          <button class="btn btn-outline btn-sm" onclick="openQAForm(${q.id})" title="Chỉnh sửa">✏️</button>
+          <button class="btn btn-outline btn-sm" onclick="deleteQA(${q.id})" style="color:#ef4444" title="Xóa">🗑</button>
+        </div>
+      </div>
+
+      <div style="display:flex;gap:6px;margin-bottom:4px">
+        <span style="font-size:11px;background:#f1f5f9;padding:2px 8px;border-radius:20px">${role}: <strong>${q.askerName||'—'}</strong></span>
+        <span style="font-size:11px;background:#f1f5f9;padding:2px 8px;border-radius:20px">🏥 ${q.askerDept||'—'}</span>
+        <span style="font-size:11px;color:var(--muted)">DS: ${q.pharmacist}</span>
+      </div>
+
+      <div style="margin-top:10px">
+        <div style="font-size:12px;color:#64748b;margin-bottom:3px;font-weight:600">❓ Câu hỏi:</div>
+        <div style="font-size:14px;color:#1e293b;line-height:1.5">${highlight(q.question)}</div>
+      </div>
+
+      <div style="margin-top:10px;background:#f0fdf4;border-radius:8px;padding:10px 12px">
+        <div style="font-size:12px;color:#16a34a;margin-bottom:3px;font-weight:600">✅ Trả lời:</div>
+        <div style="font-size:14px;color:#1e293b;line-height:1.6">${highlight(q.answer)}</div>
+        ${q.reference ? `<div style="margin-top:6px;font-size:11px;color:#64748b">📚 ${q.reference}</div>` : ''}
+      </div>
+    </div>`;
+  }).join('');
+}
+
+function renderQAStats() {
+  const el = document.getElementById('qa-stats-row');
+  if (!el || !qaList.length) { if(el) el.style.display='none'; return; }
+  el.style.display = 'grid';
+
+  const thisMonth = new Date().toISOString().slice(0,7);
+  const monthData = qaList.filter(q => (q.date||'').startsWith(thisMonth));
+
+  // Top khoa hỏi nhiều nhất
+  const deptCount = {};
+  qaList.forEach(q => { if(q.askerDept) deptCount[q.askerDept] = (deptCount[q.askerDept]||0)+1; });
+  const topDept = Object.entries(deptCount).sort((a,b)=>b[1]-a[1])[0];
+
+  // Top chủ đề
+  const topicCount = {};
+  qaList.forEach(q => { topicCount[q.topic] = (topicCount[q.topic]||0)+1; });
+  const topTopic = Object.entries(topicCount).sort((a,b)=>b[1]-a[1])[0];
+  const topTopicLabel = topTopic ? (QA_TOPIC_LABELS[topTopic[0]]||{label:topTopic[0]}).label : '—';
+
+  el.innerHTML = `
+    <div style="background:#f0fdf4;border:1px solid #6ee7b7;border-radius:10px;padding:12px 16px;text-align:center">
+      <div style="font-size:22px;font-weight:800;color:#0d9488">${qaList.length}</div>
+      <div style="font-size:11px;color:#64748b;margin-top:2px">Tổng câu hỏi</div>
+    </div>
+    <div style="background:#eff6ff;border:1px solid #93c5fd;border-radius:10px;padding:12px 16px;text-align:center">
+      <div style="font-size:22px;font-weight:800;color:#2563eb">${monthData.length}</div>
+      <div style="font-size:11px;color:#64748b;margin-top:2px">Tháng này</div>
+    </div>
+    <div style="background:#fef9c3;border:1px solid #fde047;border-radius:10px;padding:12px 16px;text-align:center">
+      <div style="font-size:13px;font-weight:800;color:#854d0e">${topDept ? topDept[0].replace('Khoa ','') : '—'}</div>
+      <div style="font-size:11px;color:#64748b;margin-top:2px">Khoa hỏi nhiều nhất</div>
+    </div>
+    <div style="background:#fdf4ff;border:1px solid #e9d5ff;border-radius:10px;padding:12px 16px;text-align:center">
+      <div style="font-size:13px;font-weight:800;color:#7e22ce">${topTopicLabel}</div>
+      <div style="font-size:11px;color:#64748b;margin-top:2px">Chủ đề phổ biến nhất</div>
+    </div>`;
+}
+
+function updateQAMonthFilter() {
+  const sel = document.getElementById('qa-filter-month');
+  if (!sel) return;
+  const months = [...new Set(qaList.map(q => (q.date||'').slice(0,7)).filter(Boolean))].sort().reverse();
+  const current = sel.value;
+  sel.innerHTML = '<option value="">Tất cả thời gian</option>' +
+    months.map(m => {
+      const [y, mo] = m.split('-');
+      return `<option value="${m}" ${current===m?'selected':''}>Tháng ${mo}/${y}</option>`;
+    }).join('');
+}
+
+function loadQAFromFirebase() {
+  if (!window._db || !window._onSnapshot || !window._col) {
+    console.warn('Firebase chưa sẵn sàng cho QA');
+    return;
+  }
+  // Load lần đầu bằng getDocs
+  window._getDocs(window._col(window._db, 'drug_info_qa'))
+    .then(snap => {
+      qaList = snap.docs.map(d => {
+        const data = d.data();
+        return { ...data, id: data.id || parseInt(d.id) || d.id };
+      });
+      renderQA();
+      updateQAMonthFilter();
+    })
+    .catch(err => {
+      console.error('QA getDocs error:', err);
+      showToast('Lỗi tải dữ liệu hỏi đáp: ' + err.message, false);
+    });
+
+  // Lắng nghe realtime
+  window._onSnapshot(
+    window._col(window._db, 'drug_info_qa'),
+    snap => {
+      qaList = snap.docs.map(d => {
+        const data = d.data();
+        return { ...data, id: data.id || parseInt(d.id) || d.id };
+      });
+      renderQA();
+      updateQAMonthFilter();
+    },
+    err => console.error('QA onSnapshot error:', err)
+  );
+}
+
+function exportQAWord() {
+  if (!qaList.length) { showToast('Chưa có dữ liệu!', false); return; }
+  const border = 'border:1px solid #000;padding:5pt 8pt;font-size:10pt';
+  const thStyle = 'border:1px solid #000;padding:5pt 8pt;background:#0d9488;color:white;font-weight:bold;font-size:10pt;text-align:center';
+  const sorted = [...qaList].sort((a,b) => (b.date||'').localeCompare(a.date||''));
+  const now = new Date();
+
+  const rows = sorted.map((q,i) => {
+    const topic = QA_TOPIC_LABELS[q.topic]||{label:q.topic||''};
+    return `<tr>
+      <td style="${border};text-align:center">${i+1}</td>
+      <td style="${border};text-align:center">${formatDate(q.date)}</td>
+      <td style="${border}">${q.askerName||''} (${QA_ROLE_LABELS[q.askerRole]||''})<br><span style="color:#64748b">${q.askerDept||''}</span></td>
+      <td style="${border};text-align:center">${QA_CHANNEL_LABELS[q.channel]||''}</td>
+      <td style="${border};text-align:center">${topic.icon} ${topic.label}</td>
+      <td style="${border}">${q.question||''}</td>
+      <td style="${border}">${q.answer||''}</td>
+      <td style="${border};font-size:9pt;color:#64748b">${q.reference||''}</td>
+      <td style="${border}">${q.pharmacist||''}</td>
+    </tr>`;
+  }).join('');
+
+  const html = `<!DOCTYPE html><html><head><meta charset="UTF-8">
+<style>
+  @page { margin:2cm 1.5cm 2cm 2.5cm; }
+  body { font-family:'Times New Roman',serif; font-size:11pt; margin:0; }
+  h2 { text-align:center; font-size:13pt; text-transform:uppercase; }
+  table { width:100%; border-collapse:collapse; font-size:10pt; }
+</style></head><body>
+<div style="text-align:center;margin-bottom:6pt">
+  <strong>BỆNH VIỆN ĐA KHOA HẢI HẬU — KHOA DƯỢC</strong>
+</div>
+<h2>SỔ GHI NHẬN THÔNG TIN THUỐC (QUY TRÌNH 12)</h2>
+<div style="text-align:center;font-size:10pt;color:#374151;margin-bottom:10pt">
+  Tổng số: <strong>${qaList.length} câu hỏi</strong> &nbsp;|&nbsp; Ngày xuất: ${now.toLocaleDateString('vi-VN')}
+</div>
+<table>
+  <thead><tr>
+    <th style="${thStyle};width:4%">STT</th>
+    <th style="${thStyle};width:8%">Ngày</th>
+    <th style="${thStyle};width:15%">Người hỏi</th>
+    <th style="${thStyle};width:8%">Kênh</th>
+    <th style="${thStyle};width:10%">Chủ đề</th>
+    <th style="${thStyle};width:22%">Câu hỏi</th>
+    <th style="${thStyle};width:22%">Câu trả lời</th>
+    <th style="${thStyle};width:8%">Tài liệu</th>
+    <th style="${thStyle};width:10%">Dược sĩ</th>
+  </tr></thead>
+  <tbody>${rows}</tbody>
+</table>
+</body></html>`;
+
+  const blob = new Blob(['\ufeff'+html], {type:'application/msword;charset=utf-8'});
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url; a.download = `SoThongTinThuoc_${now.getFullYear()}${String(now.getMonth()+1).padStart(2,'0')}.doc`;
+  a.click(); URL.revokeObjectURL(url);
+  showToast('Đã xuất sổ thông tin thuốc!');
+}
+
+// ─── END MODULE QA ───────────────────────────────
+
 function goPage(id) {
   document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
   document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
@@ -3970,38 +4573,81 @@ function filterPatientByDept(dept) {
 }
 
 // ─── ROUNDS ──────────────────────────────────────
+function onSourceChange(src) {
+  const inpatient = document.getElementById('r-inpatient-group');
+  const outpatient = document.getElementById('r-outpatient-group');
+  const deptGroup  = document.getElementById('r-dept-group');
+  const refLabel   = document.getElementById('r-ref-label');
+
+  // Style lại radio labels
+  document.querySelectorAll('#modal-round [name="r-source"]').forEach(radio => {
+    const lbl = radio.closest('label');
+    if (lbl) {
+      lbl.style.borderColor = radio.checked ? '#0d9488' : '#e2e8f0';
+      lbl.style.background  = radio.checked ? '#f0fdf4' : '';
+      lbl.style.fontWeight  = radio.checked ? '600' : '';
+    }
+  });
+
+  const needInpatient = src === 'di_buong' || src === 'hoi_chan';
+  inpatient.style.display  = needInpatient ? '' : 'none';
+  outpatient.style.display = needInpatient ? 'none' : '';
+  deptGroup.style.display  = (src === 'di_buong' || src === 'hoi_chan') ? '' : 'none';
+
+  if (refLabel) {
+    refLabel.textContent = src === 'tham_dinh_don' ? 'Mã đơn / STT khám'
+                         : src === 'tu_van'        ? 'Người hỏi / Chủ đề'
+                         : 'Ghi chú tham chiếu';
+  }
+}
+
 function saveRound() {
-  const pid  = document.getElementById('r-patient').value;
-  const drug = document.getElementById('r-drug').value.trim();
-  const prob = document.getElementById('r-problem').value.trim();
+  const source = document.querySelector('[name="r-source"]:checked')?.value || 'di_buong';
+  const needInpatient = source === 'di_buong' || source === 'hoi_chan';
+
+  // Lấy thuốc can thiệp theo nguồn
+  const drug = needInpatient
+    ? document.getElementById('r-drug').value.trim()
+    : document.getElementById('r-drug-out').value.trim();
+
+  const prob  = document.getElementById('r-problem').value.trim();
   const recom = document.getElementById('r-recommendation').value.trim();
 
-  if (!pid || !drug || !prob) { showToast('Vui lòng điền đủ thông tin!', false); return; }
+  if (!drug || !prob) { showToast('Vui lòng điền thuốc can thiệp và vấn đề!', false); return; }
 
   const tCodes = getSelectedTags('t-codes-select');
   const cCodes = getSelectedTags('c-codes-select');
 
-  // Lưu snapshot tên+mã vào round để không bị mất khi xóa bệnh nhân
-  const pt = patients.find(p => p.id === parseInt(pid));
-
-  const r = {
-    id:     Date.now(),
-    date:   document.getElementById('r-date').value,
-    dept:   document.getElementById('r-dept').value,
+  let r = {
+    id:         Date.now(),
+    source,
+    date:       document.getElementById('r-date').value,
     pharmacist: document.getElementById('r-pharmacist').value || 'Dược sĩ',
-    patientId: parseInt(pid),
-    patientName: pt ? pt.name : '',
-    patientCode: pt ? pt.code : '',
-    drug, prob, recom,
-    tCodes, cCodes,
+    drug, prob, recom, tCodes, cCodes,
     response: document.getElementById('r-response').value,
     reason:   document.getElementById('r-reason').value,
   };
 
+  if (needInpatient) {
+    const pid = document.getElementById('r-patient').value;
+    if (!pid) { showToast('Vui lòng chọn bệnh nhân!', false); return; }
+    const pt = patients.find(p => p.id === parseInt(pid));
+    r.patientId   = parseInt(pid);
+    r.patientName = pt ? pt.name : '';
+    r.patientCode = pt ? pt.code : '';
+    r.dept        = document.getElementById('r-dept').value;
+  } else {
+    // Ngoại trú / tư vấn
+    r.patientId   = null;
+    r.patientName = document.getElementById('r-outpt-name').value.trim();
+    r.refCode     = document.getElementById('r-ref-code').value.trim();
+    r.dept        = ''; // không có khoa nội trú
+  }
+
   rounds.push(r);
   saveToFirebase('rounds', r.id, r).catch(() => {});
   closeModal('modal-round');
-  clearForm(['r-drug','r-problem','r-recommendation','r-reason','r-pharmacist']);
+  clearForm(['r-drug','r-drug-out','r-problem','r-recommendation','r-reason','r-pharmacist','r-ref-code','r-outpt-name']);
   document.querySelectorAll('#t-codes-select .tag.selected, #c-codes-select .tag.selected')
     .forEach(t => t.classList.remove('selected'));
   showToast('Đã lưu can thiệp thành công!');
@@ -4009,18 +4655,40 @@ function saveRound() {
   refreshAll();
 }
 
-function renderRounds(filter = '') {
+const SOURCE_LABELS = {
+  'di_buong':     { icon:'🚶', label:'Đi buồng',    color:'badge-blue' },
+  'tham_dinh_don':{ icon:'📝', label:'Đơn ngoại trú', color:'badge-purple' },
+  'hoi_chan':     { icon:'🏥', label:'Hội chẩn',    color:'badge-teal' },
+  'tu_van':       { icon:'📞', label:'Tư vấn',      color:'badge-green' },
+  'khac':         { icon:'📌', label:'Khác',         color:'badge-amber' },
+};
+
+function renderRounds() {
   const tbody = document.getElementById('round-table');
+  const srcFilter  = document.getElementById('round-source-filter')?.value || '';
+  const deptFilter = document.getElementById('round-dept-filter')?.value || '';
+
   let list = [...rounds].reverse();
-  if (filter) list = list.filter(r => r.dept === filter);
+  if (srcFilter)  list = list.filter(r => (r.source || 'di_buong') === srcFilter);
+  if (deptFilter) list = list.filter(r => r.dept === deptFilter);
 
   if (!list.length) {
-    tbody.innerHTML = '<tr><td colspan="9"><div class="empty"><div class="empty-icon">🚶</div><div class="empty-text">Chưa có lượt đi buồng</div></div></td></tr>';
+    tbody.innerHTML = '<tr><td colspan="10"><div class="empty"><div class="empty-icon">📋</div><div class="empty-text">Chưa có can thiệp nào</div></div></td></tr>';
     return;
   }
 
   tbody.innerHTML = list.map(r => {
     const pt = patients.find(p => p.id === r.patientId);
+    const src = SOURCE_LABELS[r.source || 'di_buong'] || SOURCE_LABELS['di_buong'];
+    const isInpatient = !r.source || r.source === 'di_buong' || r.source === 'hoi_chan';
+
+    const ptDisplay  = isInpatient
+      ? (pt ? pt.name : (r.patientName || 'N/A'))
+      : (r.patientName || r.refCode || '—');
+    const deptDisplay = isInpatient && r.dept
+      ? `<span class="badge badge-blue">${r.dept.replace('Khoa ','')}</span>`
+      : (r.refCode ? `<span style="font-size:11px;color:var(--muted)">${r.refCode}</span>` : '—');
+
     const respBadge = {
       accepted: '<span class="badge badge-green">✅ Đồng ý</span>',
       partial:  '<span class="badge badge-amber">⚠️ Một phần</span>',
@@ -4029,11 +4697,12 @@ function renderRounds(filter = '') {
 
     return `<tr>
       <td style="font-size:12px;color:var(--muted)">${formatDate(r.date)}</td>
-      <td style="font-weight:600">${pt ? pt.name : (r.patientName || 'N/A')}</td>
-      <td><span class="badge badge-blue">${r.dept.replace('Khoa ','')}</span></td>
+      <td><span class="badge ${src.color}" style="font-size:11px">${src.icon} ${src.label}</span></td>
+      <td style="font-weight:600">${ptDisplay}</td>
+      <td>${deptDisplay}</td>
       <td style="font-size:12px;max-width:120px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${r.drug}</td>
-      <td>${r.tCodes.map(c=>`<span class="badge badge-amber" style="margin:1px">${c}</span>`).join('')}</td>
-      <td>${r.cCodes.map(c=>`<span class="badge badge-teal" style="margin:1px">${c}</span>`).join('')}</td>
+      <td>${(r.tCodes||[]).map(c=>`<span class="badge badge-amber" style="margin:1px">${c}</span>`).join('')}</td>
+      <td>${(r.cCodes||[]).map(c=>`<span class="badge badge-teal" style="margin:1px">${c}</span>`).join('')}</td>
       <td>${respBadge}</td>
       <td style="font-size:12px;color:var(--muted)">${r.pharmacist}</td>
       <td><button class="btn btn-outline btn-sm" onclick="viewRound(${r.id})">👁</button></td>
@@ -4041,7 +4710,7 @@ function renderRounds(filter = '') {
   }).join('');
 }
 
-function filterRounds(v) { renderRounds(v); }
+function filterRounds(v) { renderRounds(); }
 
 function viewRound(id) {
   const r = rounds.find(x => x.id === id);
@@ -4422,9 +5091,37 @@ function refreshStats() {
   const todayRounds = rounds.filter(r => r.date === today);
 
   document.getElementById('stat-rounds').textContent   = todayRounds.length;
-  document.getElementById('stat-drps').textContent     = todayRounds.reduce((s,r)=>s+r.tCodes.length,0);
+  document.getElementById('stat-drps').textContent     = todayRounds.reduce((s,r)=>s+(r.tCodes||[]).length,0);
   document.getElementById('stat-accepted').textContent = todayRounds.filter(r=>r.response==='accepted').length;
   document.getElementById('stat-patients').textContent = patients.length;
+
+  // Thống kê nguồn can thiệp (tháng hiện tại)
+  const thisMonth = new Date().toISOString().slice(0,7);
+  const monthRounds = rounds.filter(r => (r.date||'').startsWith(thisMonth));
+  const srcStats = {};
+  monthRounds.forEach(r => {
+    const src = r.source || 'di_buong';
+    if (!srcStats[src]) srcStats[src] = { total:0, accepted:0 };
+    srcStats[src].total++;
+    if (r.response === 'accepted') srcStats[src].accepted++;
+  });
+
+  const srcEl = document.getElementById('stat-by-source');
+  if (srcEl && Object.keys(srcStats).length) {
+    const labels = { di_buong:'🚶 Đi buồng', tham_dinh_don:'📝 Đơn ngoại trú', hoi_chan:'🏥 Hội chẩn', tu_van:'📞 Tư vấn', khac:'📌 Khác' };
+    srcEl.innerHTML = Object.entries(srcStats).map(([src, v]) => {
+      const rate = v.total ? Math.round(v.accepted/v.total*100) : 0;
+      return `<div style="display:flex;align-items:center;gap:8px;padding:5px 0;border-bottom:1px solid #f1f5f9">
+        <span style="min-width:130px;font-size:12px">${labels[src]||src}</span>
+        <span style="font-weight:700;font-size:13px;min-width:24px">${v.total}</span>
+        <div style="flex:1;background:#e2e8f0;border-radius:4px;height:8px">
+          <div style="width:${rate}%;background:#0d9488;height:8px;border-radius:4px"></div>
+        </div>
+        <span style="font-size:11px;color:#0d9488;min-width:35px">${rate}% ✅</span>
+      </div>`;
+    }).join('');
+    srcEl.closest?.('.src-stats-wrap')?.style && (srcEl.closest('.src-stats-wrap').style.display = '');
+  }
 
   // DRP chart
   const types = {T1:0,T2:0,T3:0,T4:0,T7:0};
@@ -4555,6 +5252,10 @@ function showToast(msg, success = true) {
   <button class="bn-item" id="bn-adr" onclick="goPageMobile(&#39;adr&#39;,this)">
     <span class="bn-icon">🚨</span>
     <span class="bn-label">ADR</span>
+  </button>
+  <button class="bn-item" id="bn-qa" onclick="goPageMobile(&#39;qa&#39;,this)">
+    <span class="bn-icon">💬</span>
+    <span class="bn-label">Hỏi đáp</span>
   </button>
   <button class="bn-item" onclick="toggleMobileSidebar()">
     <span class="bn-icon">☰</span>
