@@ -3954,12 +3954,10 @@ function populateMedDatalist(input, q, uid) {
         normMed(d.ten).includes(nq)
       ).slice(0, 60);
 
-  // Hiện label "Tên thuốc (hoạt chất) — hàm lượng"
+  // value = tên thuốc (hoạt chất) — KHÔNG kèm hàm lượng
   dl.innerHTML = matches.map(d => {
-    const label = d.ten
-      ? `${d.ten} (${d.hc}) — ${d.hl}`
-      : `${d.hc} — ${d.hl}`;
-    return `<option value="${label}" data-hc="${d.hc}" data-hl="${d.hl}" data-dd="${d.dd}">`;
+    const name = d.ten ? `${d.ten} (${d.hc})` : d.hc;
+    return `<option value="${name}" data-hl="${d.hl}" data-dd="${d.dd}">`;
   }).join('');
 }
 
@@ -4011,7 +4009,9 @@ function showMedQuickResults(q) {
 }
 
 function addMedFromCatalog(d) {
-  addMedRow({ name: (d.ten ? d.ten + ' (' + d.hc + ')' : d.hc), strength: d.hl, dose: '', route: d.dd || 'Uống' });
+  // Tên thuốc: biệt dược (hoạt chất) — KHÔNG kèm hàm lượng
+  const name = d.ten ? `${d.ten} (${d.hc})` : d.hc;
+  addMedRow({ name, strength: d.hl, dose: '', route: d.dd || 'Uống' });
   const input = document.getElementById('med-quick-search');
   const dd = document.getElementById('med-quick-dd');
   if (input) input.value = '';
