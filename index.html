@@ -2380,29 +2380,51 @@ div[class^="tiktok"].--savior-overlay-z-index-reset {
       <div class="form-group">
         <label class="form-label">Chọn mã vấn đề <span class="required">*</span></label>
         <div class="tag-group" id="t-codes-select">
-          <div class="tag" onclick="toggleTag(this,&#39;T1.1&#39;)">T1.1 Lặp thuốc</div>
-          <div class="tag" onclick="toggleTag(this,&#39;T1.2&#39;)">T1.2 Tương tác</div>
-          <div class="tag" onclick="toggleTag(this,&#39;T1.3&#39;)">T1.3 Sai thuốc</div>
-          <div class="tag" onclick="toggleTag(this,&#39;T1.4&#39;)">T1.4 Đường dùng</div>
-          <div class="tag" onclick="toggleTag(this,&#39;T1.5&#39;)">T1.5 Chống chỉ định</div>
-          <div class="tag" onclick="toggleTag(this,&#39;T1.6&#39;)">T1.6 Không chỉ định</div>
-          <div class="tag" onclick="toggleTag(this,&#39;T1.7&#39;)">T1.7 Đa thuốc</div>
-          <div class="tag" onclick="toggleTag(this,&#39;T2.1&#39;)">T2.1 Liều cao</div>
-          <div class="tag" onclick="toggleTag(this,&#39;T2.2&#39;)">T2.2 Liều thấp</div>
-          <div class="tag" onclick="toggleTag(this,&#39;T2.3&#39;)">T2.3 Tần suất nhiều</div>
-          <div class="tag" onclick="toggleTag(this,&#39;T2.4&#39;)">T2.4 Tần suất ít</div>
-          <div class="tag" onclick="toggleTag(this,&#39;T2.5&#39;)">T2.5 Thời điểm dùng</div>
-          <div class="tag" onclick="toggleTag(this,&#39;T3.1&#39;)">T3.1 Không đủ liều</div>
-          <div class="tag" onclick="toggleTag(this,&#39;T3.3&#39;)">T3.3 Dùng không đều</div>
-          <div class="tag" onclick="toggleTag(this,&#39;T4.1&#39;)">T4.1 Bệnh chưa điều trị</div>
-          <div class="tag" onclick="toggleTag(this,&#39;T4.2&#39;)">T4.2 Cần dự phòng</div>
-          <div class="tag" onclick="toggleTag(this,&#39;T5.1&#39;)">T5.1 ĐT quá ngắn</div>
-          <div class="tag" onclick="toggleTag(this,&#39;T5.2&#39;)">T5.2 ĐT quá dài</div>
-          <div class="tag" onclick="toggleTag(this,&#39;T6.1&#39;)">T6.1 Theo dõi LS</div>
-          <div class="tag" onclick="toggleTag(this,&#39;T6.2&#39;)">T6.2 Theo dõi CLS</div>
-          <div class="tag tag-red" onclick="toggleTag(this,&#39;T7.1&#39;)">T7.1 ADR</div>
-          <div class="tag tag-red" onclick="toggleTag(this,&#39;T7.2&#39;)">T7.2 Ngộ độc</div>
-          <div class="tag" onclick="toggleTag(this,&#39;T8.1&#39;)">T8.1 Không có thuốc</div>
+          <div style="width:100%;font-size:10px;font-weight:700;color:#64748b;margin-bottom:2px">T1 — Lựa chọn thuốc</div>
+          <div class="tag" onclick="toggleTag(this,'T1.1')" title="Lặp thuốc">T1.1 Lặp thuốc</div>
+          <div class="tag" onclick="toggleTag(this,'T1.2')" title="Tương tác thuốc">T1.2 Tương tác</div>
+          <div class="tag" onclick="toggleTag(this,'T1.3')" title="Sai thuốc">T1.3 Sai thuốc</div>
+          <div class="tag" onclick="toggleTag(this,'T1.4')" title="Đường dùng/dạng bào chế chưa phù hợp">T1.4 Đường dùng</div>
+          <div class="tag" onclick="toggleTag(this,'T1.5')" title="Có chống chỉ định">T1.5 Chống chỉ định</div>
+          <div class="tag" onclick="toggleTag(this,'T1.6')" title="Không có chỉ định">T1.6 Không chỉ định</div>
+          <div class="tag" onclick="toggleTag(this,'T1.7')" title="Quá nhiều thuốc cho cùng chỉ định">T1.7 Đa thuốc</div>
+          <div class="tag" onclick="toggleTag(this,'T1.99')" title="Vấn đề khác về lựa chọn thuốc">T1.99 Khác (T1)</div>
+          <div style="width:100%;font-size:10px;font-weight:700;color:#64748b;margin:4px 0 2px">T2 — Liều dùng</div>
+          <div class="tag" onclick="toggleTag(this,'T2.1')" title="Liều dùng quá cao">T2.1 Liều cao</div>
+          <div class="tag" onclick="toggleTag(this,'T2.2')" title="Liều dùng quá thấp">T2.2 Liều thấp</div>
+          <div class="tag" onclick="toggleTag(this,'T2.3')" title="Tần suất dùng quá nhiều">T2.3 Tần suất nhiều</div>
+          <div class="tag" onclick="toggleTag(this,'T2.4')" title="Tần suất dùng không đủ">T2.4 Tần suất ít</div>
+          <div class="tag" onclick="toggleTag(this,'T2.5')" title="Thời điểm dùng chưa phù hợp">T2.5 Thời điểm dùng</div>
+          <div class="tag" onclick="toggleTag(this,'T2.6')" title="Hướng dẫn liều chưa phù hợp, chưa rõ ràng">T2.6 Hướng dẫn liều</div>
+          <div class="tag" onclick="toggleTag(this,'T2.99')" title="Vấn đề khác về liều">T2.99 Khác (T2)</div>
+          <div style="width:100%;font-size:10px;font-weight:700;color:#64748b;margin:4px 0 2px">T3 — Tuân thủ điều trị</div>
+          <div class="tag" onclick="toggleTag(this,'T3.1')" title="Dùng thuốc không đủ liều như được kê đơn">T3.1 Dùng không đủ liều</div>
+          <div class="tag" onclick="toggleTag(this,'T3.2')" title="Dùng thuốc cao hơn liều như được kê đơn">T3.2 Dùng quá liều</div>
+          <div class="tag" onclick="toggleTag(this,'T3.3')" title="Dùng thuốc không đều như được kê đơn">T3.3 Dùng không đều</div>
+          <div class="tag" onclick="toggleTag(this,'T3.4')" title="Cố ý lạm dụng thuốc">T3.4 Lạm dụng thuốc</div>
+          <div class="tag" onclick="toggleTag(this,'T3.5')" title="Dạng bào chế khó sử dụng">T3.5 Dạng BC khó dùng</div>
+          <div class="tag" onclick="toggleTag(this,'T3.99')" title="Vấn đề khác về tuân thủ">T3.99 Khác (T3)</div>
+          <div style="width:100%;font-size:10px;font-weight:700;color:#64748b;margin:4px 0 2px">T4 — Điều trị chưa đủ</div>
+          <div class="tag" onclick="toggleTag(this,'T4.1')" title="Có bệnh lý chưa được điều trị đủ">T4.1 Bệnh chưa điều trị</div>
+          <div class="tag" onclick="toggleTag(this,'T4.2')" title="Cần biện pháp dự phòng/chưa dự phòng đủ">T4.2 Cần dự phòng</div>
+          <div class="tag" onclick="toggleTag(this,'T4.99')" title="Vấn đề khác về điều trị chưa đủ">T4.99 Khác (T4)</div>
+          <div style="width:100%;font-size:10px;font-weight:700;color:#64748b;margin:4px 0 2px">T5 — Độ dài đợt điều trị</div>
+          <div class="tag" onclick="toggleTag(this,'T5.1')" title="Quá ngắn">T5.1 ĐT quá ngắn</div>
+          <div class="tag" onclick="toggleTag(this,'T5.2')" title="Quá dài">T5.2 ĐT quá dài</div>
+          <div class="tag" onclick="toggleTag(this,'T5.99')" title="Vấn đề khác về độ dài đợt điều trị">T5.99 Khác (T5)</div>
+          <div style="width:100%;font-size:10px;font-weight:700;color:#64748b;margin:4px 0 2px">T6 — Cần theo dõi thêm</div>
+          <div class="tag" onclick="toggleTag(this,'T6.1')" title="Cần theo dõi biểu hiện lâm sàng">T6.1 Theo dõi LS</div>
+          <div class="tag" onclick="toggleTag(this,'T6.2')" title="Cần theo dõi các chỉ số cận lâm sàng">T6.2 Theo dõi CLS</div>
+          <div class="tag" onclick="toggleTag(this,'T6.99')" title="Vấn đề khác cần theo dõi">T6.99 Khác (T6)</div>
+          <div style="width:100%;font-size:10px;font-weight:700;color:#64748b;margin:4px 0 2px">T7 — Độc tính và ADR</div>
+          <div class="tag tag-red" onclick="toggleTag(this,'T7.1')" title="Bệnh nhân gặp ADR">T7.1 ADR</div>
+          <div class="tag tag-red" onclick="toggleTag(this,'T7.2')" title="Ngộ độc thuốc">T7.2 Ngộ độc</div>
+          <div style="width:100%;font-size:10px;font-weight:700;color:#64748b;margin:4px 0 2px">T8 — Cấp phát thuốc</div>
+          <div class="tag" onclick="toggleTag(this,'T8.1')" title="Không sẵn có thuốc">T8.1 Không có thuốc</div>
+          <div class="tag" onclick="toggleTag(this,'T8.2')" title="Không sẵn có hàm lượng">T8.2 Không có hàm lượng</div>
+          <div class="tag" onclick="toggleTag(this,'T8.3')" title="Không sẵn có dạng bào chế">T8.3 Không có dạng BC</div>
+          <div class="tag" onclick="toggleTag(this,'T8.99')" title="Vấn đề khác về cấp phát">T8.99 Khác (T8)</div>
+          <div class="tag" onclick="toggleTag(this,'T99')" title="Vấn đề không được phân loại khác">T99 Không phân loại</div>
         </div>
       </div>
 
@@ -2415,19 +2437,30 @@ div[class^="tiktok"].--savior-overlay-z-index-reset {
       <div class="form-group">
         <label class="form-label">Chọn mã can thiệp <span class="required">*</span></label>
         <div class="tag-group" id="c-codes-select">
-          <div class="tag tag-green" onclick="toggleTag(this,&#39;C1.1&#39;)">C1.1 Ngừng thuốc</div>
-          <div class="tag tag-green" onclick="toggleTag(this,&#39;C1.2&#39;)">C1.2 Thêm thuốc</div>
-          <div class="tag tag-green" onclick="toggleTag(this,&#39;C1.3&#39;)">C1.3 Điều chỉnh liều</div>
-          <div class="tag tag-green" onclick="toggleTag(this,&#39;C1.4&#39;)">C1.4 Đổi hoạt chất</div>
-          <div class="tag tag-green" onclick="toggleTag(this,&#39;C1.6&#39;)">C1.6 Đổi dạng BC</div>
-          <div class="tag tag-green" onclick="toggleTag(this,&#39;C1.7&#39;)">C1.7 Đổi tần suất</div>
-          <div class="tag" onclick="toggleTag(this,&#39;C2.1&#39;)">C2.1 Hội chẩn</div>
-          <div class="tag" onclick="toggleTag(this,&#39;C3.1&#39;)">C3.1 Tư vấn BN</div>
-          <div class="tag" onclick="toggleTag(this,&#39;C3.2&#39;)">C3.2 Cung cấp TT</div>
-          <div class="tag" onclick="toggleTag(this,&#39;C4.1&#39;)">C4.1 Giám sát LS</div>
-          <div class="tag" onclick="toggleTag(this,&#39;C4.2&#39;)">C4.2 Theo dõi CLS</div>
-          <div class="tag" onclick="toggleTag(this,&#39;C5&#39;)">C5 Điều dưỡng</div>
-          <div class="tag tag-red" onclick="toggleTag(this,&#39;C0&#39;)">C0 Không can thiệp</div>
+          <div style="width:100%;font-size:10px;font-weight:700;color:#64748b;margin-bottom:2px">C1 — Thay đổi điều trị</div>
+          <div class="tag tag-green" onclick="toggleTag(this,'C1.1')" title="Ngừng thuốc">C1.1 Ngừng thuốc</div>
+          <div class="tag tag-green" onclick="toggleTag(this,'C1.2')" title="Thêm thuốc">C1.2 Thêm thuốc</div>
+          <div class="tag tag-green" onclick="toggleTag(this,'C1.3')" title="Tăng/Giảm liều thuốc">C1.3 Điều chỉnh liều</div>
+          <div class="tag tag-green" onclick="toggleTag(this,'C1.4')" title="Thay đổi thuốc có hoạt chất khác">C1.4 Đổi hoạt chất</div>
+          <div class="tag tag-green" onclick="toggleTag(this,'C1.5')" title="Thay đổi thuốc có tên TM khác cùng hoạt chất">C1.5 Đổi tên TM</div>
+          <div class="tag tag-green" onclick="toggleTag(this,'C1.6')" title="Thay đổi dạng bào chế">C1.6 Đổi dạng BC</div>
+          <div class="tag tag-green" onclick="toggleTag(this,'C1.7')" title="Thay đổi tần suất điều trị">C1.7 Đổi tần suất</div>
+          <div class="tag tag-green" onclick="toggleTag(this,'C1.8')" title="Thay đổi độ dài đợt điều trị">C1.8 Đổi độ dài ĐT</div>
+          <div class="tag tag-green" onclick="toggleTag(this,'C1.9')" title="Không có thuốc cung ứng">C1.9 Không có thuốc</div>
+          <div style="width:100%;font-size:10px;font-weight:700;color:#64748b;margin:4px 0 2px">C2 — Cần tham khảo thêm</div>
+          <div class="tag" onclick="toggleTag(this,'C2.1')" title="Hội chẩn can thiệp/chuyên khoa">C2.1 Hội chẩn</div>
+          <div class="tag" onclick="toggleTag(this,'C2.2')" title="Ý kiến khác trong bệnh viện">C2.2 Ý kiến trong BV</div>
+          <div class="tag" onclick="toggleTag(this,'C2.3')" title="Y văn">C2.3 Y văn</div>
+          <div style="width:100%;font-size:10px;font-weight:700;color:#64748b;margin:4px 0 2px">C3 — Cung cấp thông tin</div>
+          <div class="tag" onclick="toggleTag(this,'C3.1')" title="Tư vấn thêm cho người bệnh">C3.1 Tư vấn BN</div>
+          <div class="tag" onclick="toggleTag(this,'C3.2')" title="Tóm tắt thông tin về thuốc">C3.2 Tóm tắt TT thuốc</div>
+          <div class="tag" onclick="toggleTag(this,'C3.3')" title="Hỗ trợ tính liều khuyến cáo/Hướng dẫn sử dụng thuốc">C3.3 Hỗ trợ tính liều</div>
+          <div style="width:100%;font-size:10px;font-weight:700;color:#64748b;margin:4px 0 2px">C4 — Theo dõi thêm</div>
+          <div class="tag" onclick="toggleTag(this,'C4.1')" title="Giám sát lâm sàng">C4.1 Giám sát LS</div>
+          <div class="tag" onclick="toggleTag(this,'C4.2')" title="Các chỉ số cận lâm sàng">C4.2 Theo dõi CLS</div>
+          <div class="tag" onclick="toggleTag(this,'C5')" title="Chú ý cho điều dưỡng">C5 Điều dưỡng</div>
+          <div class="tag" onclick="toggleTag(this,'C99')" title="Can thiệp khác">C99 Can thiệp khác</div>
+          <div class="tag tag-red" onclick="toggleTag(this,'C0')" title="Không có can thiệp">C0 Không can thiệp</div>
         </div>
       </div>
 
@@ -3914,7 +3947,8 @@ function addMedRow(data = {}) {
         list="med-dl-${uid}"
         style="width:100%;border:none;font-size:12px;background:transparent;padding:2px"
         oninput="onMedNameInput(this, ${uid})"
-        onchange="onMedNameSelect(this, ${uid})">
+        onchange="onMedNameSelect(this, ${uid})"
+        onblur="onMedNameSelect(this, ${uid})">
       <datalist id="med-dl-${uid}"></datalist>
     </td>
     <td style="padding:4px 6px;border:1px solid #e2e8f0">
@@ -3966,21 +4000,30 @@ function onMedNameInput(input, uid) {
 }
 
 function onMedNameSelect(input, uid) {
-  // Khi chọn từ datalist — auto-fill hàm lượng và đường dùng
-  const val = input.value;
-  const dl = document.getElementById('med-dl-' + uid);
-  if (!dl) return;
-  const opt = [...dl.options].find(o => o.value === val);
-  if (!opt) return;
+  const val = input.value.trim();
+  if (!val) return;
+  // Tra ngược DRUG_CATALOG theo tên đã chọn
+  const found = DRUG_CATALOG.find(d => {
+    const name = d.ten ? `${d.ten} (${d.hc})` : d.hc;
+    return name === val;
+  });
+  if (!found) return;
   const tr = input.closest('tr');
   const hlInput = tr.querySelector('.med-strength');
   const ddSel   = tr.querySelector('.med-route');
-  if (hlInput && opt.dataset.hl && !hlInput.value) hlInput.value = opt.dataset.hl;
-  if (ddSel && opt.dataset.dd) {
-    const dd = opt.dataset.dd;
-    const match = [...ddSel.options].find(o => o.value === dd || dd.toLowerCase().includes(o.value.toLowerCase()));
+  // Luôn fill hàm lượng từ catalog
+  if (hlInput) hlInput.value = found.hl || '';
+  // Fill đường dùng
+  if (ddSel && found.dd) {
+    const match = [...ddSel.options].find(o =>
+      found.dd.toLowerCase().includes(o.value.toLowerCase()) ||
+      o.value.toLowerCase().includes(found.dd.toLowerCase())
+    );
     if (match) ddSel.value = match.value;
   }
+  // Focus sang cột liều dùng
+  const doseInput = tr.querySelector('.med-dose');
+  if (doseInput) setTimeout(() => doseInput.focus(), 50);
 }
 
 function showMedQuickResults(q) {
@@ -4519,25 +4562,66 @@ function exportPatientWord(id) {
   if (!pt) return;
 
   // Các lượt can thiệp của bệnh nhân này
-  const ptRounds = rounds.filter(r => r.patientId === id).sort((a,b) => a.date > b.date ? 1 : -1);
+  const ptRounds = rounds.filter(r => {
+    if (r.patientId === id) return true;
+    if (r.patientId === null && pt.code) {
+      if (r.refCode === pt.code) return true;
+      if (r.patientName && r.patientName.includes(pt.code)) return true;
+    }
+    return false;
+  }).sort((a,b) => a.date > b.date ? 1 : -1);
 
   const tLabels = {
     'T1.1':'Lặp thuốc','T1.2':'Tương tác thuốc','T1.3':'Sai thuốc',
-    'T1.4':'Đường dùng chưa phù hợp','T1.5':'Có chống chỉ định',
-    'T1.6':'Không có chỉ định','T1.7':'Đa thuốc','T2.1':'Liều quá cao',
-    'T2.2':'Liều quá thấp','T2.3':'Tần suất quá nhiều','T2.4':'Tần suất không đủ',
-    'T2.5':'Thời điểm dùng chưa phù hợp','T3.1':'Dùng không đủ liều',
-    'T3.3':'Dùng không đều','T4.1':'Bệnh chưa được điều trị',
-    'T4.2':'Cần biện pháp dự phòng','T5.1':'Điều trị quá ngắn',
-    'T5.2':'Điều trị quá dài','T6.1':'Cần theo dõi lâm sàng',
-    'T6.2':'Cần theo dõi cận lâm sàng','T7.1':'Bệnh nhân gặp ADR','T7.2':'Ngộ độc thuốc',
+    'T1.4':'Đường dùng/dạng BC chưa phù hợp','T1.5':'Có chống chỉ định',
+    'T1.6':'Không có chỉ định','T1.7':'Quá nhiều thuốc cùng chỉ định',
+    'T1.99':'Vấn đề khác về lựa chọn thuốc',
+    'T2.1':'Liều dùng quá cao','T2.2':'Liều dùng quá thấp',
+    'T2.3':'Tần suất dùng quá nhiều','T2.4':'Tần suất dùng không đủ',
+    'T2.5':'Thời điểm dùng chưa phù hợp',
+    'T2.6':'Hướng dẫn liều chưa phù hợp/chưa rõ ràng',
+    'T2.99':'Vấn đề khác về liều',
+    'T3.1':'Dùng thuốc không đủ liều như kê đơn',
+    'T3.2':'Dùng thuốc cao hơn liều kê đơn',
+    'T3.3':'Dùng thuốc không đều như kê đơn',
+    'T3.4':'Cố ý lạm dụng thuốc',
+    'T3.5':'Dạng bào chế khó sử dụng',
+    'T3.99':'Vấn đề khác về tuân thủ',
+    'T4.1':'Có bệnh lý chưa được điều trị đủ',
+    'T4.2':'Cần biện pháp dự phòng/chưa dự phòng đủ',
+    'T4.99':'Vấn đề khác về điều trị chưa đủ',
+    'T5.1':'Độ dài đợt điều trị quá ngắn',
+    'T5.2':'Độ dài đợt điều trị quá dài',
+    'T5.99':'Vấn đề khác về độ dài đợt điều trị',
+    'T6.1':'Cần theo dõi biểu hiện lâm sàng',
+    'T6.2':'Cần theo dõi các chỉ số cận lâm sàng',
+    'T6.99':'Vấn đề khác cần theo dõi',
+    'T7.1':'Bệnh nhân gặp ADR','T7.2':'Ngộ độc thuốc',
+    'T8.1':'Không sẵn có thuốc','T8.2':'Không sẵn có hàm lượng',
+    'T8.3':'Không sẵn có dạng bào chế',
+    'T8.99':'Vấn đề khác về cấp phát thuốc',
+    'T99':'Vấn đề không được phân loại khác',
   };
   const cLabels = {
-    'C1.1':'Ngừng thuốc','C1.2':'Thêm thuốc','C1.3':'Điều chỉnh liều',
-    'C1.4':'Đổi hoạt chất khác','C1.6':'Đổi dạng bào chế',
-    'C1.7':'Đổi tần suất điều trị','C2.1':'Hội chẩn chuyên khoa',
-    'C3.1':'Tư vấn bệnh nhân','C4.1':'Giám sát lâm sàng',
-    'C4.2':'Theo dõi cận lâm sàng','C5':'Chú ý điều dưỡng','C0':'Không can thiệp',
+    'C1.1':'Ngừng thuốc','C1.2':'Thêm thuốc',
+    'C1.3':'Tăng/Giảm liều thuốc',
+    'C1.4':'Thay đổi thuốc có hoạt chất khác',
+    'C1.5':'Thay đổi thuốc có tên TM khác cùng hoạt chất',
+    'C1.6':'Thay đổi dạng bào chế',
+    'C1.7':'Thay đổi tần suất điều trị',
+    'C1.8':'Thay đổi độ dài đợt điều trị',
+    'C1.9':'Không có thuốc cung ứng',
+    'C2.1':'Hội chẩn can thiệp/chuyên khoa',
+    'C2.2':'Ý kiến khác trong bệnh viện',
+    'C2.3':'Y văn',
+    'C3.1':'Tư vấn thêm cho người bệnh',
+    'C3.2':'Tóm tắt thông tin về thuốc',
+    'C3.3':'Hỗ trợ tính liều/Hướng dẫn sử dụng thuốc',
+    'C4.1':'Giám sát lâm sàng',
+    'C4.2':'Theo dõi các chỉ số cận lâm sàng',
+    'C5':'Chú ý cho điều dưỡng',
+    'C99':'Can thiệp khác',
+    'C0':'Không có can thiệp',
   };
 
   const borderStyle = 'border:1px solid #000;padding:5pt 8pt';
@@ -4770,27 +4854,18 @@ function populateDrugSuggestions(pid, listId, chipsId) {
 
   // Datalist cho gõ gợi ý
   if (dl) {
-    dl.innerHTML = meds.map(m => {
-      const label = [m.name, m.strength].filter(Boolean).join(' ');
-      return `<option value="${label}">`;
-    }).join('');
+    dl.innerHTML = meds.map(m => `<option value="${m.name}">`).join('');
   }
 
-  // Chips bấm nhanh
+  // Chips bấm nhanh — chỉ tên thuốc, không kèm hàm lượng
   if (chips) {
-    if (meds.length === 0) {
-      chips.innerHTML = '';
-      return;
-    }
+    if (meds.length === 0) { chips.innerHTML = ''; return; }
+    const drugInput = listId === 'r-drug-list' ? 'r-drug' : 'r-drug-out';
     chips.innerHTML = '<span style="font-size:11px;color:#64748b;margin-right:4px">💊 Chọn nhanh:</span>' +
-      meds.map(m => {
-        const label = [m.name, m.strength].filter(Boolean).join(' ');
-        const drugInput = listId === 'r-drug-list' ? 'r-drug' : 'r-drug-out';
-        return `<span onclick="document.getElementById('${drugInput}').value='${label.replace(/'/g,"\\'")}'"
-          style="cursor:pointer;padding:3px 10px;background:#dbeafe;color:#1d4ed8;border-radius:20px;font-size:11px;font-weight:600;border:1px solid #bfdbfe;white-space:nowrap">
-          ${label}
-        </span>`;
-      }).join('');
+      meds.map(m => `<span onclick="document.getElementById('${drugInput}').value='${m.name.replace(/'/g,"\\'")}'"
+        style="cursor:pointer;padding:3px 10px;background:#dbeafe;color:#1d4ed8;border-radius:20px;font-size:11px;font-weight:600;border:1px solid #bfdbfe;white-space:nowrap">
+        ${m.name}
+      </span>`).join('');
   }
 }
 
@@ -4807,8 +4882,12 @@ function openRoundForPatient(pid) {
       if (isOutpatient) {
         const radio = document.querySelector('[name="r-source"][value="tham_dinh_don"]');
         if (radio) { radio.checked = true; onSourceChange('tham_dinh_don'); }
+        // Điền mã BA vào ô Mã đơn/STT khám
+        const refEl = document.getElementById('r-ref-code');
+        if (refEl) refEl.value = pt.code || '';
+        // Điền tên bệnh nhân
         const nameEl = document.getElementById('r-outpt-name');
-        if (nameEl) nameEl.value = pt.name + (pt.code ? ' (' + pt.code + ')' : '');
+        if (nameEl) nameEl.value = pt.name || '';
         // Populate drug suggestions cho ngoại trú
         populateDrugSuggestions(pid, 'r-drug-out-list', 'r-drug-out-chips');
       } else {
@@ -4966,7 +5045,9 @@ function renderRounds() {
       : (r.patientName || r.refCode || '—');
     const deptDisplay = isInpatient && r.dept
       ? `<span class="badge badge-blue">${r.dept.replace('Khoa ','')}</span>`
-      : (r.refCode ? `<span style="font-size:11px;color:var(--muted)">${r.refCode}</span>` : '—');
+      : r.refCode
+        ? `<span class="badge badge-purple" style="font-size:11px">📋 ${r.refCode}</span>`
+        : '—';
 
     const respBadge = {
       accepted: '<span class="badge badge-green">✅ Đồng ý</span>',
@@ -5007,23 +5088,53 @@ function viewRound(id) {
 
   const tLabels = {
     'T1.1':'Lặp thuốc','T1.2':'Tương tác thuốc','T1.3':'Sai thuốc',
-    'T1.4':'Đường dùng chưa phù hợp','T1.5':'Có chống chỉ định',
-    'T1.6':'Không có chỉ định','T1.7':'Đa thuốc','T2.1':'Liều quá cao',
-    'T2.2':'Liều quá thấp','T2.3':'Tần suất quá nhiều','T2.4':'Tần suất không đủ',
-    'T2.5':'Thời điểm dùng chưa phù hợp','T3.1':'Dùng không đủ liều',
-    'T3.3':'Dùng không đều','T4.1':'Bệnh chưa được điều trị',
-    'T4.2':'Cần biện pháp dự phòng','T5.1':'Điều trị quá ngắn',
-    'T5.2':'Điều trị quá dài','T6.1':'Cần theo dõi lâm sàng',
-    'T6.2':'Cần theo dõi cận lâm sàng','T7.1':'Bệnh nhân gặp ADR',
-    'T7.2':'Ngộ độc thuốc','T8.1':'Không có thuốc cung ứng',
+    'T1.4':'Đường dùng/dạng BC chưa phù hợp','T1.5':'Có chống chỉ định',
+    'T1.6':'Không có chỉ định','T1.7':'Quá nhiều thuốc cùng chỉ định',
+    'T1.99':'Vấn đề khác về lựa chọn thuốc',
+    'T2.1':'Liều dùng quá cao','T2.2':'Liều dùng quá thấp',
+    'T2.3':'Tần suất dùng quá nhiều','T2.4':'Tần suất dùng không đủ',
+    'T2.5':'Thời điểm dùng chưa phù hợp',
+    'T2.6':'Hướng dẫn liều chưa phù hợp/chưa rõ ràng',
+    'T2.99':'Vấn đề khác về liều',
+    'T3.1':'Dùng thuốc không đủ liều như kê đơn',
+    'T3.2':'Dùng thuốc cao hơn liều kê đơn',
+    'T3.3':'Dùng thuốc không đều như kê đơn',
+    'T3.4':'Cố ý lạm dụng thuốc','T3.5':'Dạng bào chế khó sử dụng',
+    'T3.99':'Vấn đề khác về tuân thủ',
+    'T4.1':'Có bệnh lý chưa được điều trị đủ',
+    'T4.2':'Cần biện pháp dự phòng/chưa dự phòng đủ',
+    'T4.99':'Vấn đề khác về điều trị chưa đủ',
+    'T5.1':'Độ dài đợt điều trị quá ngắn',
+    'T5.2':'Độ dài đợt điều trị quá dài',
+    'T5.99':'Vấn đề khác về độ dài đợt điều trị',
+    'T6.1':'Cần theo dõi biểu hiện lâm sàng',
+    'T6.2':'Cần theo dõi các chỉ số cận lâm sàng',
+    'T6.99':'Vấn đề khác cần theo dõi',
+    'T7.1':'Bệnh nhân gặp ADR','T7.2':'Ngộ độc thuốc',
+    'T8.1':'Không sẵn có thuốc','T8.2':'Không sẵn có hàm lượng',
+    'T8.3':'Không sẵn có dạng bào chế',
+    'T8.99':'Vấn đề khác về cấp phát thuốc',
+    'T99':'Vấn đề không được phân loại khác',
   };
   const cLabels = {
-    'C1.1':'Ngừng thuốc','C1.2':'Thêm thuốc','C1.3':'Điều chỉnh liều',
-    'C1.4':'Đổi hoạt chất khác','C1.6':'Đổi dạng bào chế',
-    'C1.7':'Đổi tần suất điều trị','C2.1':'Hội chẩn can thiệp/chuyên khoa',
-    'C3.1':'Tư vấn thêm cho bệnh nhân','C3.2':'Tóm tắt thông tin về thuốc',
-    'C4.1':'Giám sát lâm sàng','C4.2':'Theo dõi chỉ số cận lâm sàng',
-    'C5':'Chú ý cho điều dưỡng','C0':'Không có can thiệp',
+    'C1.1':'Ngừng thuốc','C1.2':'Thêm thuốc',
+    'C1.3':'Tăng/Giảm liều thuốc',
+    'C1.4':'Thay đổi thuốc có hoạt chất khác',
+    'C1.5':'Thay đổi thuốc tên TM khác cùng hoạt chất',
+    'C1.6':'Thay đổi dạng bào chế',
+    'C1.7':'Thay đổi tần suất điều trị',
+    'C1.8':'Thay đổi độ dài đợt điều trị',
+    'C1.9':'Không có thuốc cung ứng',
+    'C2.1':'Hội chẩn can thiệp/chuyên khoa',
+    'C2.2':'Ý kiến khác trong bệnh viện','C2.3':'Y văn',
+    'C3.1':'Tư vấn thêm cho người bệnh',
+    'C3.2':'Tóm tắt thông tin về thuốc',
+    'C3.3':'Hỗ trợ tính liều/Hướng dẫn sử dụng thuốc',
+    'C4.1':'Giám sát lâm sàng',
+    'C4.2':'Theo dõi các chỉ số cận lâm sàng',
+    'C5':'Chú ý cho điều dưỡng',
+    'C99':'Can thiệp khác',
+    'C0':'Không có can thiệp',
   };
 
   const tBadges = (r.tCodes||[]).map(c =>
@@ -5188,13 +5299,27 @@ function onPhieuPatientChange(pid) {
   summary.innerHTML = `<div style="font-weight:700;color:var(--teal);margin-bottom:6px">📋 ${pt.name} — ${pt.code} — ${pt.dept}</div>` +
     (rows.length ? rows.join('') : '<em style="color:var(--muted)">Chưa có thông tin lâm sàng</em>');
 
-  // Render can thiệp của BN này
-  renderPhieuRows(parseInt(pid));
+  // Render can thiệp của BN này — match cả nội trú (patientId) và ngoại trú (refCode = pt.code)
+  renderPhieuRows(parseInt(pid), pt.code);
 }
 
-function renderPhieuRows(patientId) {
+function renderPhieuRows(patientId, patientCode) {
   const pRows = document.getElementById('phieu-rows');
-  let list = patientId ? rounds.filter(r => r.patientId === patientId) : rounds;
+  let list;
+  if (patientId) {
+    list = rounds.filter(r => {
+      // Match nội trú qua patientId
+      if (r.patientId === patientId) return true;
+      // Match ngoại trú qua refCode = mã BA
+      if (r.patientId === null && patientCode && r.refCode === patientCode) return true;
+      // Match ngoại trú cũ: patientName chứa mã BA
+      if (r.patientId === null && patientCode && r.patientName && r.patientName.includes(patientCode)) return true;
+      return false;
+    });
+  } else {
+    list = rounds;
+  }
+  list = list.sort((a,b) => a.date > b.date ? 1 : -1);
 
   if (!list.length) {
     pRows.innerHTML = '<tr><td style="color:#94a3b8;font-style:italic" colspan="5">' +
