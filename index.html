@@ -1372,7 +1372,7 @@ div[class^="tiktok"].--savior-overlay-z-index-reset {
           <div style="text-align:right">
             <div style="margin-bottom:4px">Đồng ý ☐ &nbsp;&nbsp; Không đồng ý ☐</div>
             <div style="margin-bottom:44px">Lý do: ................................</div>
-            <div style="font-weight:700">Người kê đơn (Khoa: ............)</div>
+            <div style="font-weight:700">Người kê đơn (Khoa: <span id="preview-dept-sign">............</span>)</div>
           </div>
         </div>
       </div>
@@ -5607,6 +5607,9 @@ function onPhieuPatientChange(pid) {
   document.getElementById('preview-maba').textContent   = pt.code;
   document.getElementById('preview-age').textContent    = pt.age;
   document.getElementById('preview-gender').textContent = pt.gender;
+  // Điền khoa vào phần ký tên
+  const deptSign = document.getElementById('preview-dept-sign');
+  if (deptSign) deptSign.textContent = (pt.dept||'').replace('Khoa ','') || '............';
 
   // Show summary
   const summary = document.getElementById('phieu-pt-summary');
@@ -5678,15 +5681,226 @@ function renderPhieuRows(patientId, patientCode) {
     return `<tr>
       <td style="font-size:12px">${formatDate(r.date)}</td>
       <td style="text-align:center">${String(i+1).padStart(2,'0')}</td>
-      <td style="font-size:12px">Thuốc can thiệp: <strong>${r.drug}</strong><br><em>${r.tCodes.join(', ')}</em><br>${r.prob}</td>
-      <td style="font-size:12px">${r.cCodes.join(', ')}<br>${r.recom}<br><em>DS: ${r.pharmacist}</em></td>
-      <td style="font-size:12px">${resp}<br><em style="color:#94a3b8">${r.reason || ''}</em></td>
+      <td style="font-size:12px">Thuốc can thiệp: <strong>${r.drug}</strong><br><em>${(r.tCodes||[]).join(', ')}</em><br>${r.prob}</td>
+      <td style="font-size:12px">${(r.cCodes||[]).join(', ')}<br>${r.recom}<br><em>DS: ${r.pharmacist}</em></td>
+      <td style="font-size:12px">
+        ${resp}<br><em style="color:#94a3b8">${r.reason || ''}</em>
+        <div class="no-print" style="margin-top:6px">
+          <button onclick="printSingleRound(${r.id})"
+            style="padding:3px 8px;font-size:10px;background:none;border:1px solid #0d9488;color:#0d9488;border-radius:6px;cursor:pointer;font-family:inherit">
+            🖨️ In
+          </button>
+        </div>
+      </td>
     </tr>`;
   }).join('');
 }
 
+function printSingleRound(roundId) {
+  const r = rounds.find(x => x.id === roundId);
+  if (!r) return;
+
+  // Lấy thông tin BN từ round hoặc patients
+  const pt = r.patientId ? patients.find(p => p.id === r.patientId) : null;
+  const ptName   = pt ? pt.name   : (r.patientName || '');
+  const ptMaba   = pt ? pt.code   : (r.refCode || '');
+  const ptAge    = pt ? pt.age    : '';
+  const ptGender = pt ? pt.gender : '';
+  const hospital = document.getElementById('phieu-hospital')?.value || 'Bệnh viện Đa khoa Hải Hậu';
+
+  const resp = r.response === 'accepted' ? '☑ Đồng ý'
+             : r.response === 'rejected' ? '☑ Không đồng ý'
+             : '☑ Đồng ý một phần';
+  const tCodesStr = (r.tCodes||[]).join(', ');
+  const cCodesStr = (r.cCodes||[]).join(', ');
+  const dept = pt ? (pt.dept || '').replace('Khoa ','') : (r.dept || '').replace('Khoa ','');
+  const pharmacist = r.pharmacist || 'Dược sĩ';
+
+  const printHtml = `<!DOCTYPE html>
+<html lang="vi"><head>
+<meta charset="UTF-8">
+<title>Phiếu PTSD - ${ptName} - ${formatDate(r.date)}</title>
+<style>
+  @page { margin: 15mm 15mm 15mm 20mm; size: A4; }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { font-family: 'Times New Roman', Times, serif; font-size: 11pt; color: #000; }
+  h1 { font-size: 14pt; font-weight: bold; text-transform: uppercase; letter-spacing: 1px; margin: 6px 0 3px; text-align:center; }
+  .qd { font-size: 9pt; font-style: italic; color: #374151; text-align:center; }
+  .meta { display: flex; justify-content: space-between; margin: 10px 0 8px; font-size: 11pt; }
+  .pt-box { border: 1.5px solid #000; margin-bottom: 10px; }
+  .pt-box table { width: 100%; border-collapse: collapse; }
+  .pt-box td { padding: 5px 10px; border-right: 1px solid #ccc; }
+  .pt-box td:last-child { border-right: none; }
+  .label { font-size: 9pt; color: #6b7280; display: block; }
+  .val { font-weight: bold; font-size: 12pt; }
+  table.main { width: 100%; border-collapse: collapse; font-size: 10.5pt; margin-bottom: 20px; }
+  table.main th { background: #0d9488; color: white; padding: 6px 8px; text-align: left;
+    -webkit-print-color-adjust: exact; print-color-adjust: exact;
+    border: 1px solid #0d9488; font-size: 9.5pt; }
+  table.main td { padding: 8px; border: 1px solid #d1d5db; vertical-align: top; }
+  .drug { font-weight: bold; color: #0d9488; font-size: 11pt; }
+  .note { font-style: italic; color: #374151; font-size: 9.5pt; margin-top: 4px; }
+  .footer { display: flex; justify-content: space-between; margin-top: 20px; }
+  .sign { text-align: center; width: 45%; }
+  .sign-title { font-weight: bold; font-size: 11pt; }
+  .sign-note { font-size: 9pt; font-style: italic; color: #6b7280; margin: 3px 0 50px; }
+  .sign-name { font-size: 11pt; font-weight: bold; }
+</style>
+</head><body>
+<div style="text-align:center">
+  <div style="font-weight:bold;font-size:11pt">CỘNG HÒA XÃ HỘI CHỦ NGHĨA VIỆT NAM</div>
+  <div style="font-size:10pt">Độc lập – Tự do – Hạnh phúc</div>
+  <h1>Phiếu phân tích sử dụng thuốc</h1>
+  <div class="qd">(Ban hành kèm theo Quyết định số 3547./QĐ-BYT ngày 22 tháng 07 năm 2021 của Bộ trưởng Bộ Y tế)</div>
+</div>
+<div class="meta">
+  <div><strong>Bệnh viện:</strong> ${hospital}</div>
+  <div><strong>Mã bệnh án/đơn thuốc:</strong> ${ptMaba}</div>
+</div>
+<div class="pt-box">
+  <table><tr>
+    <td><span class="label">Họ và tên người bệnh</span><span class="val">${ptName}</span></td>
+    <td style="width:110px"><span class="label">Tuổi</span><span class="val">${ptAge}</span></td>
+    <td style="width:100px"><span class="label">Nam/Nữ</span><span class="val">${ptGender}</span></td>
+  </tr></table>
+</div>
+<table class="main">
+  <thead><tr>
+    <th style="width:75px">Ngày</th>
+    <th style="width:45px">Lần</th>
+    <th>Vấn đề liên quan đến thuốc</th>
+    <th>Ý kiến tư vấn của người làm công tác DLS</th>
+    <th style="width:120px">Ý kiến của người kê đơn</th>
+  </tr></thead>
+  <tbody><tr>
+    <td>${formatDate(r.date)}</td>
+    <td style="text-align:center">01</td>
+    <td>
+      <div>Thuốc can thiệp: <span class="drug">${r.drug}</span></div>
+      ${tCodesStr ? `<div class="note">${tCodesStr}</div>` : ''}
+      <div style="margin-top:5px">${r.prob||''}</div>
+    </td>
+    <td>
+      ${cCodesStr ? `<div style="font-weight:600;margin-bottom:4px">${cCodesStr}</div>` : ''}
+      <div>${r.recom||''}</div>
+      <div class="note" style="margin-top:6px">DS: ${pharmacist}</div>
+    </td>
+    <td>${resp}${r.reason ? `<div class="note" style="margin-top:4px">${r.reason}</div>` : ''}</td>
+  </tr></tbody>
+</table>
+<div class="footer">
+  <div class="sign">
+    <div class="sign-title">Người làm công tác DLS</div>
+    <div class="sign-note">(Ký và ghi rõ họ tên)</div>
+    <div class="sign-name">${pharmacist}</div>
+  </div>
+  <div class="sign">
+    <div class="sign-title">Người kê đơn (Khoa: ${dept || '...........'})</div>
+    <div class="sign-note">(Ký và ghi rõ họ tên)</div>
+    <div class="sign-name">&nbsp;</div>
+  </div>
+</div>
+</body></html>`;
+
+  printViaIframe(printHtml);
+}
+
+
+function printViaIframe(htmlContent) {
+  try {
+    // Tạo Blob URL và mở tab mới
+    const blob = new Blob([htmlContent], {type: 'text/html;charset=utf-8'});
+    const url = URL.createObjectURL(blob);
+    const w = window.open(url, '_blank');
+    if (w) {
+      w.onload = () => setTimeout(() => { w.print(); URL.revokeObjectURL(url); }, 500);
+      setTimeout(() => { try { w.print(); } catch(e){} URL.revokeObjectURL(url); }, 1500);
+    } else {
+      // Popup bị chặn - dùng link tải về
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = 'phieu_DLS.html';
+      a.click();
+      showToast('Trình duyệt chặn popup. Mở file vừa tải về rồi Ctrl+P để in!', false);
+    }
+  } catch(e) {
+    showToast('Lỗi in: ' + e.message, false);
+  }
+}
+
 function printPhieu() {
-  window.print();
+  const preview = document.getElementById('phieu-preview');
+  if (!preview) return;
+
+  // Lấy nội dung phiếu hiện tại
+  const content = preview.innerHTML;
+  const title = document.getElementById('preview-name')?.textContent || 'BN';
+
+  const printHtml = `<!DOCTYPE html>
+<html lang="vi">
+<head>
+<meta charset="UTF-8">
+<title>Phiếu PTSD Thuốc - ${title}</title>
+<style>
+  @page { margin: 15mm 15mm 15mm 20mm; size: A4; }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    font-family: 'Times New Roman', Times, serif;
+    font-size: 11pt;
+    color: #000;
+    background: white;
+  }
+  /* Copy các style phiếu cần thiết */
+  .phieu-header { text-align: center; margin-bottom: 14px; }
+  .phieu-header .quoc-hieu { font-size: 12pt; font-weight: bold; }
+  .phieu-header .doc-lap { font-size: 11pt; }
+  .phieu-header h1 { font-size: 15pt; font-weight: bold; text-transform: uppercase; margin: 8px 0 4px; letter-spacing: 1px; }
+  .phieu-header .qd { font-size: 9pt; font-style: italic; color: #374151; }
+  .phieu-meta { display: flex; justify-content: space-between; margin-bottom: 10px; font-size: 11pt; }
+  .phieu-patient-box { border: 1.5px solid #e2e8f0; border-radius: 0; margin-bottom: 12px; }
+  .phieu-patient-box table { width: 100%; border-collapse: collapse; }
+  .phieu-patient-box td { padding: 6px 10px; font-size: 11pt; }
+  .phieu-patient-box .label { font-size: 9pt; color: #6b7280; display: block; margin-bottom: 2px; }
+  .phieu-patient-box .val { font-weight: bold; font-size: 12pt; }
+  .phieu-table { margin-bottom: 14px; }
+  .phieu-table table { width: 100%; border-collapse: collapse; font-size: 10pt; }
+  .phieu-table th {
+    background: #0d9488 !important;
+    -webkit-print-color-adjust: exact;
+    print-color-adjust: exact;
+    color: white !important;
+    padding: 6px 8px;
+    text-align: left;
+    font-size: 9.5pt;
+    font-weight: bold;
+    border: 1px solid #0d9488;
+  }
+  .phieu-table td { padding: 7px 8px; border: 1px solid #d1d5db; vertical-align: top; font-size: 10pt; }
+  .phieu-table tr:nth-child(even) td { background: #f9fafb; }
+  .drug-name { font-weight: bold; color: #0d9488; font-size: 10.5pt; margin-bottom: 3px; }
+  .t-codes { color: #92400e; font-size: 9pt; margin-bottom: 3px; }
+  .prob-text { font-size: 10pt; line-height: 1.5; }
+  .recom-text { font-size: 10pt; line-height: 1.5; }
+  .ds-name { font-size: 9pt; color: #374151; font-style: italic; margin-top: 4px; }
+  .resp-accepted { color: #16a34a; font-weight: bold; font-size: 10pt; }
+  .resp-rejected { color: #dc2626; font-weight: bold; font-size: 10pt; }
+  .resp-partial  { color: #d97706; font-weight: bold; font-size: 10pt; }
+  .phieu-footer { margin-top: 14px; display: flex; justify-content: space-between; }
+  .phieu-footer .sign-block { text-align: center; width: 45%; }
+  .phieu-footer .sign-block .sign-title { font-weight: bold; font-size: 11pt; margin-bottom: 3px; }
+  .phieu-footer .sign-block .sign-note { font-size: 9pt; font-style: italic; color: #6b7280; margin-bottom: 50px; }
+  .phieu-footer .sign-block .sign-line { border-bottom: 1px solid #374151; padding-bottom: 2px; font-size: 10pt; }
+  .phieu-empty-row td { color: #9ca3af; font-style: italic; text-align: center; padding: 12px; }
+  /* Ẩn các phần không cần in */
+  .no-print, button, select, input { display: none !important; }
+</style>
+</head>
+<body>
+${content}
+</body>
+</html>`;
+
+  printViaIframe(printHtml);
 }
 
 function exportWord() {
