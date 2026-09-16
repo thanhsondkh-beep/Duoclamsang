@@ -1435,6 +1435,78 @@ div[class^="tiktok"].--savior-overlay-z-index-reset {
           <div class="card-body" style="padding:8px 16px" id="stat-by-source"></div>
         </div>
       </div>
+
+      <!-- THỐNG KÊ THEO DƯỢC SĨ -->
+      <div style="margin-top:16px">
+        <!-- Bộ lọc tháng chung -->
+        <div class="card" style="margin-bottom:12px;padding:12px 16px">
+          <div style="display:flex;align-items:center;gap:12px;flex-wrap:wrap">
+            <span style="font-size:13px;font-weight:700;color:#0d9488">📅 Lọc theo thời gian:</span>
+            <select id="rep-month-filter" onchange="renderPharmacistStats()" style="padding:6px 12px;border:1.5px solid #e2e8f0;border-radius:8px;font-size:13px">
+              <option value="">Tất cả các tháng</option>
+            </select>
+            <button class="btn btn-outline btn-sm" onclick="exportPharmacistStats()" style="color:#0d9488;border-color:#5eead4;margin-left:auto">📄 Xuất báo cáo tổng hợp</button>
+          </div>
+        </div>
+
+        <!-- Can thiệp theo dược sĩ -->
+        <div class="card" style="margin-bottom:12px">
+          <div class="card-header">
+            <div class="card-title">🚶 Can thiệp DLS theo dược sĩ</div>
+          </div>
+          <div class="table-wrap">
+            <table>
+              <thead>
+                <tr>
+                  <th>Dược sĩ</th>
+                  <th id="rep-round-month-headers"></th>
+                  <th style="background:#0d9488;color:white;text-align:center">Tổng</th>
+                  <th style="background:#0d9488;color:white;text-align:center">Tỷ lệ chấp thuận</th>
+                </tr>
+              </thead>
+              <tbody id="rep-round-by-ds"></tbody>
+            </table>
+          </div>
+        </div>
+
+        <!-- ADR theo dược sĩ -->
+        <div class="card" style="margin-bottom:12px">
+          <div class="card-header">
+            <div class="card-title">🚨 Báo cáo ADR theo dược sĩ</div>
+          </div>
+          <div class="table-wrap">
+            <table>
+              <thead>
+                <tr>
+                  <th>Dược sĩ</th>
+                  <th id="rep-adr-month-headers"></th>
+                  <th style="background:#0d9488;color:white;text-align:center">Tổng</th>
+                </tr>
+              </thead>
+              <tbody id="rep-adr-by-ds"></tbody>
+            </table>
+          </div>
+        </div>
+
+        <!-- Hỏi đáp theo dược sĩ -->
+        <div class="card">
+          <div class="card-header">
+            <div class="card-title">💬 Hỏi đáp thuốc theo dược sĩ</div>
+          </div>
+          <div class="table-wrap">
+            <table>
+              <thead>
+                <tr>
+                  <th>Dược sĩ</th>
+                  <th id="rep-qa-month-headers"></th>
+                  <th style="background:#0d9488;color:white;text-align:center">Tổng</th>
+                </tr>
+              </thead>
+              <tbody id="rep-qa-by-ds"></tbody>
+            </table>
+          </div>
+        </div>
+      </div>
     </div>
 
     </div>
@@ -3107,7 +3179,7 @@ function goPage(id) {
   };
   document.getElementById('topbar-title').textContent = titles[id] || '';
   event.currentTarget.classList.add('active');
-  if (id === 'report') updateReport();
+  if (id === 'report') { updateReport(); renderPharmacistStats(); }
   syncBottomNav(id);
   closeMobileSidebar();
 }
@@ -6054,6 +6126,191 @@ function exportExcel() {
 }
 
 // ─── STATS ───────────────────────────────────────
+// ── THỐNG KÊ THEO DƯỢC SĨ ─────────────────────────
+function initRepMonthFilter() {
+  const sel = document.getElementById('rep-month-filter');
+  if (!sel) return;
+  // Lấy tất cả tháng từ 3 nguồn dữ liệu
+  const allMonths = new Set([
+    ...rounds.map(r => (r.date||'').slice(0,7)),
+    ...adrs.map(a => (a.adrDate||'').slice(0,7)),
+    ...qaList.map(q => (q.date||'').slice(0,7)),
+  ].filter(Boolean));
+  const sorted = [...allMonths].sort().reverse();
+  const cur = sel.value;
+  sel.innerHTML = '<option value="">Tất cả các tháng</option>' +
+    sorted.map(m => {
+      const [y,mo] = m.split('-');
+      return `<option value="${m}" ${cur===m?'selected':''}>Tháng ${mo}/${y}</option>`;
+    }).join('');
+}
+
+function renderPharmacistStats() {
+  initRepMonthFilter();
+  const mf = document.getElementById('rep-month-filter')?.value || '';
+
+  // Lọc dữ liệu theo tháng
+  const fRounds = mf ? rounds.filter(r=>(r.date||'').startsWith(mf)) : rounds;
+  const fAdrs   = mf ? adrs.filter(a=>(a.adrDate||'').startsWith(mf)) : adrs;
+  const fQA     = mf ? qaList.filter(q=>(q.date||'').startsWith(mf)) : qaList;
+
+  // Lấy danh sách tháng để làm cột (tối đa 6 tháng gần nhất hoặc tháng được chọn)
+  let months;
+  if (mf) {
+    months = [mf];
+  } else {
+    const allM = new Set([
+      ...rounds.map(r=>(r.date||'').slice(0,7)),
+      ...adrs.map(a=>(a.adrDate||'').slice(0,7)),
+      ...qaList.map(q=>(q.date||'').slice(0,7)),
+    ].filter(Boolean));
+    months = [...allM].sort().reverse().slice(0,6).reverse();
+  }
+
+  const mLabel = m => { const [y,mo]=m.split('-'); return `T${mo}/${y.slice(2)}`; };
+
+  // ── Hàm tạo bảng theo dược sĩ ──
+  function buildTable(data, keyFn, monthFn, acceptFn, headerId, bodyId) {
+    // Lấy ds list
+    const dsList = [...new Set(data.map(keyFn).filter(Boolean))].sort();
+    if (!dsList.length) {
+      document.getElementById(bodyId).innerHTML =
+        `<tr><td colspan="${months.length+3}" style="text-align:center;color:#94a3b8;padding:12px">Chưa có dữ liệu</td></tr>`;
+      document.getElementById(headerId).outerHTML =
+        months.map(m=>`<th style="text-align:center;min-width:70px">${mLabel(m)}</th>`).join('');
+      return;
+    }
+
+    // Header tháng
+    const hEl = document.getElementById(headerId);
+    if (hEl) hEl.outerHTML = months.map(m=>
+      `<th style="text-align:center;min-width:70px;background:#f0fdf4;color:#0d9488;font-weight:700" id="${headerId}">${mLabel(m)}</th>`
+    ).join('');
+
+    // Rows
+    const rows = dsList.map(ds => {
+      const dsData = data.filter(d => keyFn(d) === ds);
+      const monthCounts = months.map(m => dsData.filter(d => monthFn(d).startsWith(m)).length);
+      const total = dsData.length;
+      const accepted = acceptFn ? dsData.filter(acceptFn).length : null;
+      const rate = accepted !== null && total > 0 ? Math.round(accepted/total*100) : null;
+
+      return `<tr>
+        <td style="font-weight:600;font-size:13px">${ds}</td>
+        ${monthCounts.map(c=>`<td style="text-align:center;font-size:13px">${c||'—'}</td>`).join('')}
+        <td style="text-align:center;font-weight:800;font-size:15px;color:#0d9488">${total}</td>
+        ${rate!==null ? `<td style="text-align:center">
+          <div style="display:flex;align-items:center;gap:6px">
+            <div style="flex:1;background:#e2e8f0;border-radius:4px;height:8px">
+              <div style="width:${rate}%;background:#0d9488;height:8px;border-radius:4px"></div>
+            </div>
+            <span style="font-size:12px;font-weight:700;color:#0d9488;min-width:35px">${rate}%</span>
+          </div>
+        </td>` : ''}
+      </tr>`;
+    });
+
+    // Tổng cộng
+    const totals = months.map(m => data.filter(d=>monthFn(d).startsWith(m)).length);
+    const grandTotal = data.length;
+    rows.push(`<tr style="background:#f0fdf4;font-weight:700">
+      <td style="font-size:12px;color:#0d9488">Tổng cộng</td>
+      ${totals.map(c=>`<td style="text-align:center;color:#0d9488">${c||'—'}</td>`).join('')}
+      <td style="text-align:center;font-size:15px;color:#0d9488">${grandTotal}</td>
+      ${acceptFn!==null ? '<td></td>' : ''}
+    </tr>`);
+
+    document.getElementById(bodyId).innerHTML = rows.join('');
+  }
+
+  // Can thiệp
+  buildTable(fRounds,
+    r => r.pharmacist || 'Dược sĩ',
+    r => r.date || '',
+    r => r.response === 'accepted',
+    'rep-round-month-headers', 'rep-round-by-ds'
+  );
+
+  // ADR
+  buildTable(fAdrs,
+    a => a.reporter || 'Dược sĩ',
+    a => a.adrDate || '',
+    null,
+    'rep-adr-month-headers', 'rep-adr-by-ds'
+  );
+
+  // Hỏi đáp
+  buildTable(fQA,
+    q => q.pharmacist || 'Dược sĩ',
+    q => q.date || '',
+    null,
+    'rep-qa-month-headers', 'rep-qa-by-ds'
+  );
+}
+
+function exportPharmacistStats() {
+  const mf = document.getElementById('rep-month-filter')?.value || '';
+  const mLabel = m => { const [y,mo]=m.split('-'); return `Tháng ${mo}/${y}`; };
+
+  const allM = [...new Set([
+    ...rounds.map(r=>(r.date||'').slice(0,7)),
+    ...adrs.map(a=>(a.adrDate||'').slice(0,7)),
+    ...qaList.map(q=>(q.date||'').slice(0,7)),
+  ].filter(Boolean))].sort().reverse().slice(0,6).reverse();
+  const months = mf ? [mf] : allM;
+
+  const border = 'border:1px solid #000;padding:5pt 8pt;font-size:10pt';
+  const th = (t,s='') => `<th style="border:1px solid #000;padding:5pt 8pt;background:#0d9488;color:white;font-weight:bold;text-align:center;font-size:10pt${s}">${t}</th>`;
+
+  const buildSection = (title, data, keyFn, monthFn, acceptFn) => {
+    const dsList = [...new Set(data.map(keyFn).filter(Boolean))].sort();
+    const rows = dsList.map(ds => {
+      const dsD = data.filter(d=>keyFn(d)===ds);
+      const mCounts = months.map(m=>dsD.filter(d=>monthFn(d).startsWith(m)).length);
+      const total = dsD.length;
+      const rate = acceptFn ? Math.round(dsD.filter(acceptFn).length/total*100)+'%' : '';
+      return `<tr>
+        <td style="${border};font-weight:600">${ds}</td>
+        ${mCounts.map(c=>`<td style="${border};text-align:center">${c||0}</td>`).join('')}
+        <td style="${border};text-align:center;font-weight:700;color:#0d9488">${total}</td>
+        ${acceptFn ? `<td style="${border};text-align:center">${rate}</td>` : ''}
+      </tr>`;
+    });
+    return `<h2 style="font-size:12pt;margin:16pt 0 6pt;color:#0d9488">${title}</h2>
+    <table style="width:100%;border-collapse:collapse">
+      <thead><tr>
+        ${th('Dược sĩ')}
+        ${months.map(m=>th(mLabel(m))).join('')}
+        ${th('Tổng')}
+        ${acceptFn ? th('Chấp thuận') : ''}
+      </tr></thead>
+      <tbody>${rows.join('')}</tbody>
+    </table>`;
+  };
+
+  const now = new Date();
+  const html = `<!DOCTYPE html><html><head><meta charset="UTF-8">
+  <style>@page{margin:2cm 1.5cm 2cm 2.5cm;}body{font-family:'Times New Roman',serif;font-size:11pt;}</style>
+  </head><body>
+  <div style="text-align:center;margin-bottom:12pt">
+    <div style="font-weight:bold">BỆNH VIỆN ĐA KHOA HẢI HẬU — KHOA DƯỢC</div>
+    <div style="font-size:14pt;font-weight:bold;margin:4pt 0">BÁO CÁO HOẠT ĐỘNG DƯỢC LÂM SÀNG</div>
+    <div style="font-size:10pt;color:#374151">${mf ? mLabel(mf) : 'Tổng hợp các tháng'} · Xuất ngày: ${now.toLocaleDateString('vi-VN')}</div>
+  </div>
+  ${buildSection('I. CAN THIỆP DLS THEO DƯỢC SĨ', rounds, r=>r.pharmacist||'Dược sĩ', r=>r.date||'', r=>r.response==='accepted')}
+  ${buildSection('II. BÁO CÁO ADR THEO DƯỢC SĨ', adrs, a=>a.reporter||'Dược sĩ', a=>a.adrDate||'', null)}
+  ${buildSection('III. HỎI ĐÁP THUỐC THEO DƯỢC SĨ', qaList, q=>q.pharmacist||'Dược sĩ', q=>q.date||'', null)}
+  </body></html>`;
+
+  const blob = new Blob(['\ufeff'+html], {type:'application/msword;charset=utf-8'});
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = `BaoCao_DLS_${now.getFullYear()}${String(now.getMonth()+1).padStart(2,'0')}.doc`;
+  a.click(); URL.revokeObjectURL(url);
+  showToast('Đã xuất báo cáo tổng hợp!');
+}
+
 function refreshStats() {
   const today = new Date().toISOString().split('T')[0];
   const todayRounds = rounds.filter(r => r.date === today);
