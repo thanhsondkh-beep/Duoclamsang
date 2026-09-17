@@ -2478,21 +2478,20 @@ div[class^="tiktok"].--savior-overlay-z-index-reset {
         <input type="text" id="tr-doc-name" placeholder="VD: Slide tập huấn kháng sinh.pdf">
       </div>
 
-      <div class="divider">Hình ảnh buổi tập huấn (tối đa 2 ảnh)</div>
-      <div class="form-grid form-grid-2" style="gap:12px">
+      <div class="divider">Hình ảnh buổi tập huấn (link Google Drive)</div>
+      <div style="font-size:11px;color:#64748b;margin-bottom:8px">
+        💡 Tải ảnh lên Google Drive → chuột phải → "Lấy link" → dán vào đây
+      </div>
+      <div class="form-grid form-grid-2">
         <div class="form-group">
-          <label class="form-label">Hình ảnh 1</label>
-          <input type="file" id="tr-img1" accept="image/*" onchange="previewImg(this,'tr-prev1')"
-            style="font-size:12px;padding:6px">
-          <div id="tr-prev1" style="margin-top:6px"></div>
-          <input type="hidden" id="tr-img1-data">
+          <label class="form-label">🔗 Link ảnh 1</label>
+          <input type="url" id="tr-img1-url" placeholder="https://drive.google.com/...">
+          <input type="text" id="tr-img1-name" placeholder="Tên ảnh (tùy chọn)" style="margin-top:6px">
         </div>
         <div class="form-group">
-          <label class="form-label">Hình ảnh 2</label>
-          <input type="file" id="tr-img2" accept="image/*" onchange="previewImg(this,'tr-prev2')"
-            style="font-size:12px;padding:6px">
-          <div id="tr-prev2" style="margin-top:6px"></div>
-          <input type="hidden" id="tr-img2-data">
+          <label class="form-label">🔗 Link ảnh 2</label>
+          <input type="url" id="tr-img2-url" placeholder="https://drive.google.com/...">
+          <input type="text" id="tr-img2-name" placeholder="Tên ảnh (tùy chọn)" style="margin-top:6px">
         </div>
       </div>
 
@@ -4543,30 +4542,22 @@ function openTrainingForm(id = null) {
     document.getElementById('tr-count').value    = t.count || '';
     document.getElementById('tr-audience').value = t.audience || '';
     document.getElementById('tr-content').value  = t.content || '';
-    document.getElementById('tr-doc-url').value  = t.docUrl || '';
-    document.getElementById('tr-doc-name').value = t.docName || '';
-    document.getElementById('tr-notes').value    = t.notes || '';
-    // Preview ảnh cũ
-    if (t.img1) document.getElementById('tr-prev1').innerHTML =
-      `<img src="${t.img1}" style="max-width:100%;max-height:120px;border-radius:8px;border:1px solid #e2e8f0">`;
-    if (t.img2) document.getElementById('tr-prev2').innerHTML =
-      `<img src="${t.img2}" style="max-width:100%;max-height:120px;border-radius:8px;border:1px solid #e2e8f0">`;
-    document.getElementById('tr-img1-data').value = t.img1 || '';
-    document.getElementById('tr-img2-data').value = t.img2 || '';
+    document.getElementById('tr-doc-url').value   = t.docUrl || '';
+    document.getElementById('tr-doc-name').value  = t.docName || '';
+    document.getElementById('tr-notes').value     = t.notes || '';
+    document.getElementById('tr-img1-url').value  = t.img1Url || '';
+    document.getElementById('tr-img1-name').value = t.img1Name || '';
+    document.getElementById('tr-img2-url').value  = t.img2Url || '';
+    document.getElementById('tr-img2-name').value = t.img2Name || '';
   } else {
     document.getElementById('training-modal-title').textContent = '📚 Thêm buổi tập huấn';
     ['tr-title','tr-location','tr-speaker','tr-count','tr-audience',
-     'tr-content','tr-doc-url','tr-doc-name','tr-notes'].forEach(id => {
+     'tr-content','tr-doc-url','tr-doc-name','tr-notes',
+     'tr-img1-url','tr-img1-name','tr-img2-url','tr-img2-name'].forEach(id => {
       const el = document.getElementById(id);
       if (el) el.value = '';
     });
     document.getElementById('tr-date').value = localDT;
-    document.getElementById('tr-prev1').innerHTML = '';
-    document.getElementById('tr-prev2').innerHTML = '';
-    document.getElementById('tr-img1-data').value = '';
-    document.getElementById('tr-img2-data').value = '';
-    document.getElementById('tr-img1').value = '';
-    document.getElementById('tr-img2').value = '';
   }
   openModal('modal-training');
 }
@@ -4574,14 +4565,27 @@ function openTrainingForm(id = null) {
 function previewImg(input, previewId) {
   const file = input.files[0];
   if (!file) return;
+  const hiddenId = previewId === 'tr-prev1' ? 'tr-img1-data' : 'tr-img2-data';
   const reader = new FileReader();
   reader.onload = e => {
-    const data = e.target.result;
-    document.getElementById(previewId).innerHTML =
-      `<img src="${data}" style="max-width:100%;max-height:120px;border-radius:8px;border:1px solid #e2e8f0">`;
-    // Lưu base64
-    const hiddenId = previewId === 'tr-prev1' ? 'tr-img1-data' : 'tr-img2-data';
-    document.getElementById(hiddenId).value = data;
+    // Nén ảnh trước khi lưu
+    const img = new Image();
+    img.onload = () => {
+      const canvas = document.createElement('canvas');
+      const MAX = 800; // max width/height
+      let w = img.width, h = img.height;
+      if (w > MAX || h > MAX) {
+        if (w > h) { h = Math.round(h * MAX / w); w = MAX; }
+        else { w = Math.round(w * MAX / h); h = MAX; }
+      }
+      canvas.width = w; canvas.height = h;
+      canvas.getContext('2d').drawImage(img, 0, 0, w, h);
+      const compressed = canvas.toDataURL('image/jpeg', 0.75);
+      document.getElementById(previewId).innerHTML =
+        `<img src="${compressed}" style="max-width:100%;max-height:120px;border-radius:8px;border:1px solid #e2e8f0">`;
+      document.getElementById(hiddenId).value = compressed;
+    };
+    img.src = e.target.result;
   };
   reader.readAsDataURL(file);
 }
@@ -4602,8 +4606,10 @@ function saveTraining() {
     docUrl:   document.getElementById('tr-doc-url').value.trim(),
     docName:  document.getElementById('tr-doc-name').value.trim(),
     notes:    document.getElementById('tr-notes').value.trim(),
-    img1:     document.getElementById('tr-img1-data').value,
-    img2:     document.getElementById('tr-img2-data').value,
+    img1Url:  document.getElementById('tr-img1-url').value.trim(),
+    img1Name: document.getElementById('tr-img1-name').value.trim(),
+    img2Url:  document.getElementById('tr-img2-url').value.trim(),
+    img2Name: document.getElementById('tr-img2-name').value.trim(),
   };
 
   if (editingTrainingId) {
@@ -4613,15 +4619,11 @@ function saveTraining() {
     trainingList.push(t);
   }
 
-  // Lưu Firebase (không lưu ảnh base64 lên Firebase để tiết kiệm dung lượng)
-  const fbData = {...t, img1: t.img1 ? '[image]' : '', img2: t.img2 ? '[image]' : ''};
-  saveToFirebase('trainings', t.id, fbData).catch(() => {});
-
-  // Lưu ảnh vào localStorage
-  try {
-    if (t.img1) localStorage.setItem(`tr_img1_${t.id}`, t.img1);
-    if (t.img2) localStorage.setItem(`tr_img2_${t.id}`, t.img2);
-  } catch(e) {}
+  // Lưu lên Firestore - ảnh đã nén nên < 500KB, Firestore hỗ trợ tới 1MB/document
+  saveToFirebase('trainings', t.id, t).catch(e => {
+    console.error('Save training error:', e);
+    showToast('Lỗi lưu: ' + e.message, false);
+  });
 
   closeModal('modal-training');
   editingTrainingId = null;
@@ -4636,7 +4638,6 @@ function deleteTraining(id) {
   trainingList = trainingList.filter(x => x.id !== id);
   if (window._deleteDoc && window._doc && window._db)
     window._deleteDoc(window._doc(window._db, 'trainings', String(id))).catch(() => {});
-  try { localStorage.removeItem(`tr_img1_${id}`); localStorage.removeItem(`tr_img2_${id}`); } catch(e) {}
   renderTrainings();
   showToast('Đã xóa!');
 }
@@ -4687,13 +4688,20 @@ function renderTrainings() {
   }
 
   list.innerHTML = data.map(t => {
-    // Lấy ảnh từ localStorage
-    let img1 = t.img1 && t.img1 !== '[image]' ? t.img1 : '';
-    let img2 = t.img2 && t.img2 !== '[image]' ? t.img2 : '';
-    try {
-      if (!img1) img1 = localStorage.getItem(`tr_img1_${t.id}`) || '';
-      if (!img2) img2 = localStorage.getItem(`tr_img2_${t.id}`) || '';
-    } catch(e) {}
+    const img1Url  = t.img1Url || '';
+    const img2Url  = t.img2Url || '';
+    const img1Name = t.img1Name || 'Xem ảnh 1';
+    const img2Name = t.img2Name || 'Xem ảnh 2';
+
+    // Chuyển link Drive sang link xem trực tiếp
+    const driveViewUrl = url => {
+      if (!url) return '';
+      const m = url.match(/\/d\/([a-zA-Z0-9_-]+)/);
+      if (m) return `https://drive.google.com/uc?export=view&id=${m[1]}`;
+      return url;
+    };
+    const img1View = driveViewUrl(img1Url);
+    const img2View = driveViewUrl(img2Url);
 
     const dateStr = t.date ? new Date(t.date).toLocaleString('vi-VN',{day:'2-digit',month:'2-digit',year:'numeric',hour:'2-digit',minute:'2-digit'}) : '—';
 
@@ -4725,9 +4733,19 @@ function renderTrainings() {
         ${t.notes ? `<span style="font-size:11px;color:#64748b;font-style:italic">💬 ${t.notes}</span>` : ''}
       </div>
 
-      ${(img1||img2) ? `<div style="display:flex;gap:8px;margin-top:10px;flex-wrap:wrap">
-        ${img1 ? `<img src="${img1}" style="height:120px;width:auto;border-radius:8px;border:1px solid #e2e8f0;cursor:pointer;object-fit:cover" onclick="this.style.height=this.style.height==='auto'?'120px':'auto'" title="Click để phóng to">` : ''}
-        ${img2 ? `<img src="${img2}" style="height:120px;width:auto;border-radius:8px;border:1px solid #e2e8f0;cursor:pointer;object-fit:cover" onclick="this.style.height=this.style.height==='auto'?'120px':'auto'" title="Click để phóng to">` : ''}
+      ${(img1View||img2View||img1Url||img2Url) ? `<div style="display:flex;gap:8px;margin-top:10px;flex-wrap:wrap;align-items:flex-start">
+        ${img1View ? `<div style="text-align:center">
+          <img src="${img1View}" style="height:120px;width:auto;border-radius:8px;border:1px solid #e2e8f0;cursor:pointer;object-fit:cover"
+            onclick="this.style.height=this.style.height==='auto'?'120px':'auto'" title="Click để phóng to"
+            onerror="this.outerHTML='<a href=\\'${img1Url}\\' target=\\'_blank\\' style=\\'display:flex;align-items:center;gap:5px;padding:8px 12px;background:#eff6ff;color:#2563eb;border-radius:8px;font-size:12px;font-weight:600;text-decoration:none;border:1px solid #bfdbfe\\'>🖼️ ${img1Name}</a>'">
+          <div style="font-size:10px;color:#64748b;margin-top:3px">${img1Name}</div>
+        </div>` : (img1Url ? `<a href="${img1Url}" target="_blank" style="display:flex;align-items:center;gap:5px;padding:8px 12px;background:#eff6ff;color:#2563eb;border-radius:8px;font-size:12px;font-weight:600;text-decoration:none;border:1px solid #bfdbfe">🖼️ ${img1Name}</a>` : '')}
+        ${img2View ? `<div style="text-align:center">
+          <img src="${img2View}" style="height:120px;width:auto;border-radius:8px;border:1px solid #e2e8f0;cursor:pointer;object-fit:cover"
+            onclick="this.style.height=this.style.height==='auto'?'120px':'auto'" title="Click để phóng to"
+            onerror="this.outerHTML='<a href=\\'${img2Url}\\' target=\\'_blank\\' style=\\'display:flex;align-items:center;gap:5px;padding:8px 12px;background:#eff6ff;color:#2563eb;border-radius:8px;font-size:12px;font-weight:600;text-decoration:none;border:1px solid #bfdbfe\\'>🖼️ ${img2Name}</a>'">
+          <div style="font-size:10px;color:#64748b;margin-top:3px">${img2Name}</div>
+        </div>` : (img2Url ? `<a href="${img2Url}" target="_blank" style="display:flex;align-items:center;gap:5px;padding:8px 12px;background:#eff6ff;color:#2563eb;border-radius:8px;font-size:12px;font-weight:600;text-decoration:none;border:1px solid #bfdbfe">🖼️ ${img2Name}</a>` : '')}
       </div>` : ''}
     </div>`;
   }).join('');
@@ -4739,17 +4757,24 @@ function loadTrainingsFromFirebase() {
     .then(snap => {
       trainingList = snap.docs.map(d => {
         const data = d.data();
-        // Phục hồi ảnh từ localStorage
-        try {
-          if (data.img1 === '[image]') data.img1 = localStorage.getItem(`tr_img1_${data.id}`) || '';
-          if (data.img2 === '[image]') data.img2 = localStorage.getItem(`tr_img2_${data.id}`) || '';
-        } catch(e) {}
         return { ...data, id: data.id || parseInt(d.id) || d.id };
       });
       renderTrainings();
       updateTrainingYearFilter();
     })
     .catch(e => console.error('Trainings load error:', e));
+
+  // Realtime updates
+  if (window._onSnapshot && window._col) {
+    window._onSnapshot(window._col(window._db, 'trainings'), snap => {
+      trainingList = snap.docs.map(d => {
+        const data = d.data();
+        return { ...data, id: data.id || parseInt(d.id) || d.id };
+      });
+      renderTrainings();
+      updateTrainingYearFilter();
+    }, e => console.error('Training snapshot error:', e));
+  }
 }
 
 // ─── END MODULE TRAINING ────────────────────────────
