@@ -924,6 +924,9 @@ div[class^="tiktok"].--savior-overlay-z-index-reset {
   </div>
 
   <div class="nav-section">Thông tin thuốc</div>
+  <div class="nav-item" onclick="goPage(&#39;counseling&#39;)">
+    <span class="icon">🩺</span> Tư vấn ngoại trú
+  </div>
   <div class="nav-item" onclick="goPage(&#39;qa&#39;)">
     <span class="icon">💬</span> Hỏi đáp thuốc
   </div>
@@ -1509,6 +1512,40 @@ div[class^="tiktok"].--savior-overlay-z-index-reset {
             </table>
           </div>
         </div>
+
+        <!-- Tư vấn ngoại trú -->
+        <div class="card" style="margin-top:12px">
+          <div class="card-header">
+            <div class="card-title">🩺 Tư vấn ngoại trú theo dược sĩ</div>
+          </div>
+          <!-- Stat cards nhỏ -->
+          <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:8px;padding:10px 16px;border-bottom:1px solid #e2e8f0">
+            <div style="background:#f0fdf4;border:1px solid #86efac;border-radius:8px;padding:10px;text-align:center">
+              <div style="font-size:18px;font-weight:800;color:#0d9488" id="rep-csl-today">0</div>
+              <div style="font-size:11px;color:#64748b">Lượt tư vấn hôm nay</div>
+            </div>
+            <div style="background:#eff6ff;border:1px solid #93c5fd;border-radius:8px;padding:10px;text-align:center">
+              <div style="font-size:18px;font-weight:800;color:#2563eb" id="rep-csl-month">0</div>
+              <div style="font-size:11px;color:#64748b">Lượt tháng này</div>
+            </div>
+            <div style="background:#fffbeb;border:1px solid #fde68a;border-radius:8px;padding:10px;text-align:center">
+              <div style="font-size:18px;font-weight:800;color:#d97706" id="rep-csl-total">0</div>
+              <div style="font-size:11px;color:#64748b">Tổng tất cả</div>
+            </div>
+          </div>
+          <div class="table-wrap">
+            <table>
+              <thead>
+                <tr>
+                  <th>Dược sĩ</th>
+                  <th id="rep-csl-month-headers"></th>
+                  <th style="background:#0d9488;color:white;text-align:center">Tổng</th>
+                </tr>
+              </thead>
+              <tbody id="rep-csl-by-ds"></tbody>
+            </table>
+          </div>
+        </div>
       </div>
     </div>
 
@@ -1642,6 +1679,74 @@ div[class^="tiktok"].--savior-overlay-z-index-reset {
         </iframe>
       </div>
     </div><!-- end page-tuongtac -->
+
+    <!-- COUNSELING PAGE: TƯ VẤN NGOẠI TRÚ -->
+    <div class="page" id="page-counseling">
+
+      <!-- Stat cards -->
+      <div id="csl-stats" style="display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin-bottom:14px"></div>
+
+      <!-- Bộ lọc -->
+      <div style="display:flex;gap:8px;margin-bottom:12px;flex-wrap:wrap;align-items:center">
+        <input type="date" id="csl-date-filter" onchange="renderCounseling()"
+          style="padding:7px 10px;border:1.5px solid #e2e8f0;border-radius:8px;font-size:13px">
+        <select id="csl-month-filter" onchange="renderCounseling()"
+          style="padding:7px 10px;border:1.5px solid #e2e8f0;border-radius:8px;font-size:13px">
+          <option value="">Tất cả tháng</option>
+        </select>
+        <select id="csl-topic-filter" onchange="renderCounseling()"
+          style="padding:7px 10px;border:1.5px solid #e2e8f0;border-radius:8px;font-size:13px">
+          <option value="">Tất cả chủ đề</option>
+          <option value="cach_dung">💊 Cách dùng / Liều dùng</option>
+          <option value="thoi_diem">⏰ Thời điểm uống thuốc</option>
+          <option value="tac_dung_phu">⚠️ Tác dụng phụ</option>
+          <option value="tuong_tac">🚫 Tương tác / Thực phẩm tránh</option>
+          <option value="tuan_thu">🔄 Tuân thủ điều trị</option>
+          <option value="ky_thuat">💉 Kỹ thuật dùng thuốc</option>
+          <option value="bao_quan">📦 Bảo quản thuốc</option>
+          <option value="khac">📌 Khác</option>
+        </select>
+        <input type="text" id="csl-search" placeholder="🔍 Tìm tên BN, thuốc..."
+          oninput="renderCounseling()"
+          style="flex:1;min-width:180px;padding:7px 10px;border:1.5px solid #e2e8f0;border-radius:8px;font-size:13px">
+        <button class="btn btn-primary btn-sm" onclick="openCounselingForm()">+ Ghi tư vấn</button>
+      </div>
+
+      <!-- Bảng -->
+      <div class="card" style="padding:0;overflow:hidden">
+        <div class="card-header" style="padding:10px 16px">
+          <div class="card-title">🩺 Danh sách lượt tư vấn ngoại trú</div>
+          <div style="display:flex;gap:8px">
+            <span id="csl-count" style="font-size:12px;color:#64748b;align-self:center"></span>
+            <button class="btn btn-outline btn-sm" onclick="exportCounselingWord()" style="color:#0d9488;border-color:#5eead4">📄 Xuất Word</button>
+          </div>
+        </div>
+        <div class="table-wrap">
+          <table>
+            <thead>
+              <tr>
+                <th style="width:80px">Ngày</th>
+                <th>Bệnh nhân</th>
+                <th>Chẩn đoán</th>
+                <th>Thuốc tư vấn</th>
+                <th>Chủ đề tư vấn</th>
+                <th style="width:60px">Thời gian</th>
+                <th>Dược sĩ</th>
+                <th style="width:80px"></th>
+              </tr>
+            </thead>
+            <tbody id="csl-table"></tbody>
+          </table>
+        </div>
+      </div>
+
+      <!-- Biểu đồ theo tháng -->
+      <div class="card" style="margin-top:14px">
+        <div class="card-header"><div class="card-title">📊 Thống kê theo tháng</div></div>
+        <div class="card-body" id="csl-chart" style="padding:10px 16px"></div>
+      </div>
+
+    </div><!-- end page-counseling -->
 
     <!-- QA PAGE: HỎI ĐÁP THUỐC -->
     <div class="page" id="page-qa">
@@ -2424,6 +2529,111 @@ div[class^="tiktok"].--savior-overlay-z-index-reset {
   </div>
 </div>
 
+<!-- MODAL: TƯ VẤN NGOẠI TRÚ -->
+<div class="modal-overlay" id="modal-counseling">
+  <div class="modal" style="max-width:760px;width:95vw">
+    <div class="modal-header">
+      <div class="modal-title" id="csl-modal-title">🩺 Ghi nhận tư vấn ngoại trú</div>
+      <button class="modal-close" onclick="closeModal(&#39;modal-counseling&#39;)">✕</button>
+    </div>
+    <div class="modal-body">
+
+      <div class="divider">Thông tin bệnh nhân</div>
+      <div class="form-grid form-grid-3">
+        <div class="form-group">
+          <label class="form-label">Ngày tư vấn <span class="required">*</span></label>
+          <input type="date" id="csl-date">
+        </div>
+        <div class="form-group">
+          <label class="form-label">Mã đơn / STT khám</label>
+          <input type="text" id="csl-code" placeholder="VD: 249954, STT 35...">
+        </div>
+        <div class="form-group">
+          <label class="form-label">Dược sĩ thực hiện</label>
+          <input type="text" id="csl-pharmacist" list="pharmacist-list" placeholder="Tên dược sĩ..." autocomplete="off">
+        </div>
+      </div>
+      <div class="form-grid form-grid-3" style="margin-top:10px">
+        <div class="form-group">
+          <label class="form-label">Họ tên bệnh nhân</label>
+          <input type="text" id="csl-name" placeholder="Nguyễn Văn A...">
+        </div>
+        <div class="form-group">
+          <label class="form-label">Tuổi / Giới</label>
+          <div style="display:flex;gap:6px">
+            <input type="number" id="csl-age" placeholder="Tuổi" min="0" max="120" style="width:70px">
+            <select id="csl-gender" style="flex:1">
+              <option value="Nam">Nam</option>
+              <option value="Nữ">Nữ</option>
+            </select>
+          </div>
+        </div>
+        <div class="form-group">
+          <label class="form-label">Thời gian tư vấn (phút)</label>
+          <input type="number" id="csl-duration" placeholder="5" min="1" max="60">
+        </div>
+      </div>
+      <div class="form-group" style="margin-top:10px">
+        <label class="form-label">Chẩn đoán / Bệnh lý chính</label>
+        <input type="text" id="csl-diagnosis" placeholder="VD: Tăng huyết áp, Đái tháo đường type 2...">
+      </div>
+
+      <div class="divider">Nội dung tư vấn</div>
+      <div class="form-group">
+        <label class="form-label">Thuốc tư vấn <span class="required">*</span></label>
+        <div style="display:flex;gap:6px;margin-bottom:6px">
+          <div style="position:relative;flex:1">
+            <input type="text" id="csl-drug-input"
+              placeholder="Gõ tên thuốc rồi Enter để thêm..."
+              autocomplete="off"
+              oninput="cslFilterDrug(this.value)"
+              onkeydown="if(event.key==='Enter'){event.preventDefault();cslAddDrugFromInput()}"
+              style="width:100%;padding:8px 12px;border:1.5px solid #e2e8f0;border-radius:8px;font-size:13px;font-family:inherit;outline:none">
+            <div id="csl-drug-dd" style="display:none;position:absolute;top:calc(100%+3px);left:0;right:0;background:white;border:1.5px solid #e2e8f0;border-radius:10px;box-shadow:0 8px 20px rgba(0,0,0,.1);z-index:200;max-height:180px;overflow-y:auto"></div>
+          </div>
+        </div>
+        <div id="csl-drug-chips" style="display:flex;flex-wrap:wrap;gap:5px;min-height:34px;padding:5px 8px;background:#f8fafc;border:1.5px solid #e2e8f0;border-radius:8px;align-items:center">
+          <span id="csl-drug-placeholder" style="font-size:12px;color:#94a3b8">Chưa có thuốc nào — gõ và Enter để thêm</span>
+        </div>
+        <input type="hidden" id="csl-drugs">
+        <datalist id="csl-drug-list"></datalist>
+      </div>
+
+      <div class="form-group" style="margin-top:10px">
+        <label class="form-label">Chủ đề tư vấn <span class="required">*</span></label>
+        <div style="display:flex;flex-wrap:wrap;gap:7px;margin-top:6px" id="csl-topic-select">
+          <label style="display:flex;align-items:center;gap:6px;font-size:13px;cursor:pointer;padding:6px 12px;border:1.5px solid #e2e8f0;border-radius:8px">
+            <input type="checkbox" name="csl-topic" value="cach_dung" style="width:14px;height:14px"> 💊 Cách dùng / Liều dùng</label>
+          <label style="display:flex;align-items:center;gap:6px;font-size:13px;cursor:pointer;padding:6px 12px;border:1.5px solid #e2e8f0;border-radius:8px">
+            <input type="checkbox" name="csl-topic" value="thoi_diem" style="width:14px;height:14px"> ⏰ Thời điểm uống thuốc</label>
+          <label style="display:flex;align-items:center;gap:6px;font-size:13px;cursor:pointer;padding:6px 12px;border:1.5px solid #e2e8f0;border-radius:8px">
+            <input type="checkbox" name="csl-topic" value="tac_dung_phu" style="width:14px;height:14px"> ⚠️ Tác dụng phụ cần theo dõi</label>
+          <label style="display:flex;align-items:center;gap:6px;font-size:13px;cursor:pointer;padding:6px 12px;border:1.5px solid #e2e8f0;border-radius:8px">
+            <input type="checkbox" name="csl-topic" value="tuong_tac" style="width:14px;height:14px"> 🚫 Tương tác / Thực phẩm tránh</label>
+          <label style="display:flex;align-items:center;gap:6px;font-size:13px;cursor:pointer;padding:6px 12px;border:1.5px solid #e2e8f0;border-radius:8px">
+            <input type="checkbox" name="csl-topic" value="tuan_thu" style="width:14px;height:14px"> 🔄 Tuân thủ điều trị</label>
+          <label style="display:flex;align-items:center;gap:6px;font-size:13px;cursor:pointer;padding:6px 12px;border:1.5px solid #e2e8f0;border-radius:8px">
+            <input type="checkbox" name="csl-topic" value="ky_thuat" style="width:14px;height:14px"> 💉 Kỹ thuật dùng thuốc</label>
+          <label style="display:flex;align-items:center;gap:6px;font-size:13px;cursor:pointer;padding:6px 12px;border:1.5px solid #e2e8f0;border-radius:8px">
+            <input type="checkbox" name="csl-topic" value="bao_quan" style="width:14px;height:14px"> 📦 Bảo quản thuốc</label>
+          <label style="display:flex;align-items:center;gap:6px;font-size:13px;cursor:pointer;padding:6px 12px;border:1.5px solid #e2e8f0;border-radius:8px">
+            <input type="checkbox" name="csl-topic" value="khac" style="width:14px;height:14px"> 📌 Khác</label>
+        </div>
+      </div>
+
+      <div class="form-group" style="margin-top:10px">
+        <label class="form-label">Ghi chú / Nội dung tư vấn chi tiết</label>
+        <textarea id="csl-notes" rows="3" placeholder="Ghi chú nội dung tư vấn, vấn đề bệnh nhân gặp phải..."></textarea>
+      </div>
+
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-outline" onclick="closeModal(&#39;modal-counseling&#39;)">Huỷ</button>
+      <button class="btn btn-primary" onclick="saveCounseling()">💾 Lưu tư vấn</button>
+    </div>
+  </div>
+</div>
+
 <!-- MODAL: TẬP HUẤN -->
 <div class="modal-overlay" id="modal-training">
   <div class="modal" style="max-width:760px;width:95vw">
@@ -2876,6 +3086,7 @@ async function loadFromFirebase() {
     refreshAll();
     syncPhieu();
     loadQAFromFirebase();
+    loadCounselingFromFirebase();
     loadTrainingsFromFirebase();
     showToast('Đã tải dữ liệu thành công!');
   } catch(e) {
@@ -3287,11 +3498,13 @@ function goPage(id) {
     phieu:     'Phiếu phân tích sử dụng thuốc',
     report:    'Báo cáo thống kê',
     adr:       'Báo cáo phản ứng có hại (ADR)',
-    training:  'Tập huấn & Đào tạo'
+    training:   'Tập huấn & Đào tạo',
+    counseling: 'Tư vấn sử dụng thuốc ngoại trú'
   };
   document.getElementById('topbar-title').textContent = titles[id] || '';
   event.currentTarget.classList.add('active');
   if (id === 'report') { updateReport(); renderPharmacistStats(); }
+  if (id === 'counseling') renderCounseling();
   syncBottomNav(id);
   closeMobileSidebar();
 }
@@ -4518,6 +4731,418 @@ function openAddPatient() {
   document.getElementById('pt-date').value = today;
   openModal('modal-patient');
 }
+
+// ═══════════════════════════════════════════════════
+// MODULE: TƯ VẤN NGOẠI TRÚ
+// ═══════════════════════════════════════════════════
+let counselingList = [];
+let editingCslId = null;
+
+const CSL_TOPICS = {
+  cach_dung:    '💊 Cách dùng / Liều dùng',
+  thoi_diem:    '⏰ Thời điểm uống thuốc',
+  tac_dung_phu: '⚠️ Tác dụng phụ',
+  tuong_tac:    '🚫 Tương tác / Thực phẩm tránh',
+  tuan_thu:     '🔄 Tuân thủ điều trị',
+  ky_thuat:     '💉 Kỹ thuật dùng thuốc',
+  bao_quan:     '📦 Bảo quản thuốc',
+  khac:         '📌 Khác',
+};
+
+// ─── CHIP THUỐC TƯ VẤN ─────────────────────────────
+let _cslDrugs = [];
+
+function cslFilterDrug(q) {
+  const dd = document.getElementById('csl-drug-dd');
+  if (!q.trim()) { dd.style.display='none'; return; }
+  const nq = q.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g,'');
+  const matches = (typeof DRUG_CATALOG!=='undefined' ? DRUG_CATALOG : [])
+    .filter(d => {
+      const n = (d.ten+' '+d.hc).toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g,'');
+      return n.includes(nq) && !_cslDrugs.includes(d.ten||(d.hc));
+    }).slice(0,30);
+  if (!matches.length) { dd.style.display='none'; return; }
+  dd.innerHTML = matches.map(d => {
+    const label = d.ten ? `${d.ten} (${d.hc}) ${d.hl}` : `${d.hc} ${d.hl}`;
+    return `<div onclick="cslAddDrug('${label.replace(/'/g,"\\'")}','${d.hl||''}')"
+      style="padding:7px 12px;font-size:12px;cursor:pointer;border-bottom:1px solid #f8fafc"
+      onmouseover="this.style.background='#f0fdf4'" onmouseout="this.style.background=''">
+      <strong>${d.ten||d.hc}</strong> <span style="color:#64748b;font-size:11px">${d.ten?'('+d.hc+')':''} · ${d.hl}</span>
+    </div>`;
+  }).join('');
+  dd.style.display = 'block';
+}
+
+function cslAddDrugFromInput() {
+  const input = document.getElementById('csl-drug-input');
+  const val = input.value.trim();
+  if (val) { cslAddDrug(val); input.value=''; }
+}
+
+function cslAddDrug(name) {
+  if (!name || _cslDrugs.includes(name)) return;
+  _cslDrugs.push(name);
+  document.getElementById('csl-drug-input').value = '';
+  document.getElementById('csl-drug-dd').style.display = 'none';
+  cslRenderChips();
+}
+
+function cslRemoveDrug(name) {
+  _cslDrugs = _cslDrugs.filter(d => d !== name);
+  cslRenderChips();
+}
+
+function cslRenderChips() {
+  const el = document.getElementById('csl-drug-chips');
+  const ph = document.getElementById('csl-drug-placeholder');
+  document.getElementById('csl-drugs').value = _cslDrugs.join(', ');
+  if (!_cslDrugs.length) {
+    el.innerHTML = '<span id="csl-drug-placeholder" style="font-size:12px;color:#94a3b8">Chưa có thuốc nào — gõ và Enter để thêm</span>';
+    return;
+  }
+  el.innerHTML = _cslDrugs.map(d =>
+    `<span style="display:inline-flex;align-items:center;gap:4px;padding:3px 10px;background:#dbeafe;color:#1d4ed8;border-radius:20px;font-size:12px;font-weight:600">
+      ${d}
+      <span onclick="cslRemoveDrug('${d.replace(/'/g,"\\'")}') " style="cursor:pointer;opacity:.6;font-size:14px;line-height:1">×</span>
+    </span>`
+  ).join('');
+}
+
+document.addEventListener('click', e => {
+  const dd = document.getElementById('csl-drug-dd');
+  const inp = document.getElementById('csl-drug-input');
+  if (dd && inp && !inp.contains(e.target) && !dd.contains(e.target))
+    dd.style.display = 'none';
+});
+
+// ─── END CHIP THUỐC ────────────────────────────────
+
+function openCounselingForm(id = null) {
+  editingCslId = id;
+  const today = new Date().toISOString().split('T')[0];
+
+  // Populate drug datalist từ DRUG_CATALOG
+  const dl = document.getElementById('csl-drug-list');
+  if (dl && typeof DRUG_CATALOG !== 'undefined') {
+    const seen = new Set();
+    dl.innerHTML = DRUG_CATALOG.filter(d => {
+      const k = d.hc; if (seen.has(k)) return false; seen.add(k); return true;
+    }).map(d => `<option value="${d.ten ? d.ten+' ('+d.hc+')' : d.hc}">`).join('');
+  }
+
+  if (id) {
+    const c = counselingList.find(x => x.id === id);
+    if (!c) return;
+    document.getElementById('csl-modal-title').textContent = '✏️ Chỉnh sửa tư vấn';
+    document.getElementById('csl-date').value       = c.date || '';
+    document.getElementById('csl-code').value       = c.code || '';
+    document.getElementById('csl-pharmacist').value = c.pharmacist || '';
+    document.getElementById('csl-name').value       = c.name || '';
+    document.getElementById('csl-age').value        = c.age || '';
+    document.getElementById('csl-gender').value     = c.gender || 'Nam';
+    document.getElementById('csl-duration').value   = c.duration || '';
+    document.getElementById('csl-diagnosis').value  = c.diagnosis || '';
+    document.getElementById('csl-drugs').value      = c.drugs || '';
+    _cslDrugs = c.drugs ? c.drugs.split(',').map(d=>d.trim()).filter(Boolean) : [];
+    cslRenderChips();
+    document.getElementById('csl-notes').value      = c.notes || '';
+    document.querySelectorAll('[name="csl-topic"]').forEach(cb => {
+      cb.checked = (c.topics || []).includes(cb.value);
+    });
+  } else {
+    document.getElementById('csl-modal-title').textContent = '🩺 Ghi nhận tư vấn ngoại trú';
+    ['csl-code','csl-name','csl-age','csl-duration','csl-diagnosis','csl-drugs','csl-notes'].forEach(i => {
+      const el = document.getElementById(i); if (el) el.value = '';
+    });
+    document.getElementById('csl-date').value       = today;
+    document.getElementById('csl-pharmacist').value = currentUser?.name || '';
+    document.getElementById('csl-gender').value     = 'Nam';
+    document.querySelectorAll('[name="csl-topic"]').forEach(cb => cb.checked = false);
+    _cslDrugs = [];
+    cslRenderChips();
+  }
+  openModal('modal-counseling');
+}
+
+function saveCounseling() {
+  const drugs = document.getElementById('csl-drugs').value.trim();
+  const topics = [...document.querySelectorAll('[name="csl-topic"]:checked')].map(cb => cb.value);
+  if (!drugs) { showToast('Vui lòng nhập thuốc tư vấn!', false); return; }
+  if (!topics.length) { showToast('Vui lòng chọn ít nhất 1 chủ đề!', false); return; }
+
+  const c = {
+    id:         editingCslId || Date.now(),
+    date:       document.getElementById('csl-date').value,
+    code:       document.getElementById('csl-code').value.trim(),
+    pharmacist: document.getElementById('csl-pharmacist').value.trim() || 'Dược sĩ',
+    name:       document.getElementById('csl-name').value.trim(),
+    age:        parseInt(document.getElementById('csl-age').value) || '',
+    gender:     document.getElementById('csl-gender').value,
+    duration:   parseInt(document.getElementById('csl-duration').value) || '',
+    diagnosis:  document.getElementById('csl-diagnosis').value.trim(),
+    drugs, topics,
+    notes:      document.getElementById('csl-notes').value.trim(),
+  };
+
+  if (editingCslId) {
+    const idx = counselingList.findIndex(x => x.id === editingCslId);
+    if (idx >= 0) counselingList[idx] = c;
+  } else {
+    counselingList.push(c);
+  }
+
+  saveToFirebase('outpatient_counseling', c.id, c).catch(() => {});
+  editingCslId = null;
+  closeModal('modal-counseling');
+  renderCounseling();
+  showToast(editingCslId ? 'Đã cập nhật!' : 'Đã lưu lượt tư vấn!');
+}
+
+function deleteCounseling(id) {
+  const c = counselingList.find(x => x.id === id);
+  if (!c || !confirm(`Xóa lượt tư vấn "${c.name || c.code}"?`)) return;
+  counselingList = counselingList.filter(x => x.id !== id);
+  if (window._deleteDoc && window._doc && window._db)
+    window._deleteDoc(window._doc(window._db, 'outpatient_counseling', String(id))).catch(() => {});
+  renderCounseling();
+  showToast('Đã xóa!');
+}
+
+function renderCounseling() {
+  const dateF  = document.getElementById('csl-date-filter')?.value || '';
+  const monthF = document.getElementById('csl-month-filter')?.value || '';
+  const topicF = document.getElementById('csl-topic-filter')?.value || '';
+  const q      = (document.getElementById('csl-search')?.value || '').toLowerCase();
+
+  // Cập nhật month filter
+  const monthSel = document.getElementById('csl-month-filter');
+  if (monthSel) {
+    const months = [...new Set(counselingList.map(c => (c.date||'').slice(0,7)).filter(Boolean))].sort().reverse();
+    const cur = monthSel.value;
+    monthSel.innerHTML = '<option value="">Tất cả tháng</option>' +
+      months.map(m => { const [y,mo]=m.split('-'); return `<option value="${m}" ${cur===m?'selected':''}>Tháng ${mo}/${y}</option>`; }).join('');
+  }
+
+  let data = [...counselingList].sort((a,b) => (b.date||'').localeCompare(a.date||''));
+  if (dateF) data = data.filter(c => c.date === dateF);
+  else if (monthF) data = data.filter(c => (c.date||'').startsWith(monthF));
+  if (topicF) data = data.filter(c => (c.topics||[]).includes(topicF));
+  if (q) data = data.filter(c =>
+    (c.name||'').toLowerCase().includes(q) ||
+    (c.drugs||'').toLowerCase().includes(q) ||
+    (c.diagnosis||'').toLowerCase().includes(q) ||
+    (c.code||'').toLowerCase().includes(q)
+  );
+
+  // Stat cards
+  const today = new Date().toISOString().split('T')[0];
+  const todayCount = counselingList.filter(c => c.date === today).length;
+  const thisMonth = new Date().toISOString().slice(0,7);
+  const monthCount = counselingList.filter(c => (c.date||'').startsWith(thisMonth)).length;
+  const avgDuration = counselingList.filter(c=>c.duration).length
+    ? Math.round(counselingList.filter(c=>c.duration).reduce((s,c)=>s+c.duration,0)/counselingList.filter(c=>c.duration).length)
+    : 0;
+  // Chủ đề phổ biến
+  const topicCount = {};
+  counselingList.forEach(c => (c.topics||[]).forEach(t => topicCount[t]=(topicCount[t]||0)+1));
+  const topTopic = Object.entries(topicCount).sort((a,b)=>b[1]-a[1])[0];
+
+  document.getElementById('csl-stats').innerHTML = `
+    <div style="background:#f0fdf4;border:1px solid #86efac;border-radius:10px;padding:12px 16px;text-align:center">
+      <div style="font-size:24px;font-weight:800;color:#0d9488">${todayCount}</div>
+      <div style="font-size:11px;color:#64748b;margin-top:2px">Lượt tư vấn hôm nay</div>
+    </div>
+    <div style="background:#eff6ff;border:1px solid #93c5fd;border-radius:10px;padding:12px 16px;text-align:center">
+      <div style="font-size:24px;font-weight:800;color:#2563eb">${monthCount}</div>
+      <div style="font-size:11px;color:#64748b;margin-top:2px">Lượt tư vấn tháng này</div>
+    </div>
+    <div style="background:#fdf4ff;border:1px solid #e9d5ff;border-radius:10px;padding:12px 16px;text-align:center">
+      <div style="font-size:24px;font-weight:800;color:#7c3aed">${avgDuration || '—'}</div>
+      <div style="font-size:11px;color:#64748b;margin-top:2px">Phút tư vấn TB</div>
+    </div>
+    <div style="background:#fffbeb;border:1px solid #fde68a;border-radius:10px;padding:12px 16px;text-align:center">
+      <div style="font-size:13px;font-weight:800;color:#d97706">${topTopic ? CSL_TOPICS[topTopic[0]] : '—'}</div>
+      <div style="font-size:11px;color:#64748b;margin-top:2px">Chủ đề phổ biến nhất</div>
+    </div>`;
+
+  // Bảng
+  document.getElementById('csl-count').textContent = `${data.length} lượt`;
+  const tbody = document.getElementById('csl-table');
+  if (!data.length) {
+    tbody.innerHTML = `<tr><td colspan="8" style="text-align:center;padding:20px;color:#94a3b8">Chưa có dữ liệu tư vấn</td></tr>`;
+    renderCslChart();
+    return;
+  }
+
+  tbody.innerHTML = data.map(c => {
+    const topicBadges = (c.topics||[]).map(t =>
+      `<span style="display:inline-block;padding:1px 7px;background:#f0fdf4;color:#0d9488;border-radius:10px;font-size:10px;font-weight:600;margin:1px;border:1px solid #86efac">${CSL_TOPICS[t]||t}</span>`
+    ).join('');
+    return `<tr>
+      <td style="font-size:12px;white-space:nowrap">${formatDate(c.date)}</td>
+      <td>
+        <div style="font-weight:600;font-size:13px">${c.name||'—'}</div>
+        <div style="font-size:11px;color:#64748b">${c.code?'Mã: '+c.code:''} ${c.age?c.age+'t':''} ${c.gender||''}</div>
+      </td>
+      <td style="font-size:12px;color:#475569">${c.diagnosis||'—'}</td>
+      <td style="font-size:12px;max-width:160px">${c.drugs||'—'}</td>
+      <td>${topicBadges}</td>
+      <td style="text-align:center;font-size:12px">${c.duration?c.duration+' phút':'—'}</td>
+      <td style="font-size:12px;color:#64748b">${c.pharmacist||'—'}</td>
+      <td style="white-space:nowrap">
+        <button class="btn btn-outline btn-sm" onclick="openCounselingForm(${c.id})" style="color:#0d9488;border-color:#5eead4" title="Sửa">✏️</button>
+        <button class="btn btn-outline btn-sm" onclick="deleteCounseling(${c.id})" style="color:#ef4444;border-color:#fca5a5;margin-left:4px" title="Xóa">🗑</button>
+      </td>
+    </tr>`;
+  }).join('');
+
+  renderCslChart();
+}
+
+function renderCslChart() {
+  const el = document.getElementById('csl-chart');
+  if (!el) return;
+
+  // Thống kê theo tháng + theo dược sĩ
+  const byMonth = {};
+  const byDs = {};
+  const byTopic = {};
+  counselingList.forEach(c => {
+    const m = (c.date||'').slice(0,7); if (!m) return;
+    byMonth[m] = (byMonth[m]||0) + 1;
+    const ds = c.pharmacist || 'Dược sĩ';
+    if (!byDs[ds]) byDs[ds] = {};
+    byDs[ds][m] = (byDs[ds][m]||0) + 1;
+    (c.topics||[]).forEach(t => byTopic[t]=(byTopic[t]||0)+1);
+  });
+
+  const months = Object.keys(byMonth).sort().slice(-6);
+  if (!months.length) { el.innerHTML = '<div style="text-align:center;color:#94a3b8;padding:16px">Chưa có dữ liệu</div>'; return; }
+
+  // Bar chart đơn giản
+  const max = Math.max(...months.map(m=>byMonth[m]));
+  const bars = months.map(m => {
+    const [y,mo] = m.split('-');
+    const pct = Math.round(byMonth[m]/max*100);
+    return `<div style="display:flex;flex-direction:column;align-items:center;gap:4px;flex:1">
+      <div style="font-size:12px;font-weight:700;color:#0d9488">${byMonth[m]}</div>
+      <div style="width:100%;background:#e2e8f0;border-radius:4px;height:80px;display:flex;align-items:flex-end">
+        <div style="width:100%;background:#0d9488;border-radius:4px;height:${pct}%;transition:.3s"></div>
+      </div>
+      <div style="font-size:11px;color:#64748b">T${mo}/${y.slice(2)}</div>
+    </div>`;
+  }).join('');
+
+  // Bảng DS × tháng
+  const dsList = Object.keys(byDs).sort();
+  const dsRows = dsList.map(ds => `<tr>
+    <td style="font-weight:600;font-size:12px;padding:6px 10px">${ds}</td>
+    ${months.map(m=>`<td style="text-align:center;font-size:13px;padding:6px 10px">${byDs[ds][m]||'—'}</td>`).join('')}
+    <td style="text-align:center;font-weight:800;color:#0d9488;font-size:14px;padding:6px 10px">${Object.values(byDs[ds]).reduce((s,v)=>s+v,0)}</td>
+  </tr>`).join('');
+
+  // Top chủ đề
+  const topTopics = Object.entries(byTopic).sort((a,b)=>b[1]-a[1]).slice(0,5);
+  const topicBars = topTopics.map(([t,n]) => {
+    const pct = Math.round(n/topTopics[0][1]*100);
+    return `<div style="display:flex;align-items:center;gap:8px;margin-bottom:8px">
+      <div style="min-width:140px;font-size:12px">${CSL_TOPICS[t]||t}</div>
+      <div style="flex:1;background:#e2e8f0;border-radius:4px;height:18px">
+        <div style="width:${pct}%;background:#0d9488;border-radius:4px;height:18px;display:flex;align-items:center;padding-left:6px">
+          <span style="font-size:11px;color:white;font-weight:700">${n}</span>
+        </div>
+      </div>
+    </div>`;
+  }).join('');
+
+  el.innerHTML = `
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:20px;flex-wrap:wrap">
+      <div>
+        <div style="font-size:12px;font-weight:700;color:#0d9488;margin-bottom:10px">📊 Lượt tư vấn theo tháng</div>
+        <div style="display:flex;gap:6px;align-items:flex-end;height:120px">${bars}</div>
+      </div>
+      <div>
+        <div style="font-size:12px;font-weight:700;color:#0d9488;margin-bottom:10px">🏆 Chủ đề tư vấn phổ biến</div>
+        ${topicBars || '<div style="color:#94a3b8;font-size:12px">Chưa có dữ liệu</div>'}
+      </div>
+    </div>
+    <div style="margin-top:16px">
+      <div style="font-size:12px;font-weight:700;color:#0d9488;margin-bottom:8px">👤 Dược sĩ × Tháng</div>
+      <div style="overflow-x:auto"><table style="width:100%;border-collapse:collapse;font-size:12px">
+        <thead><tr style="background:#f0fdf4">
+          <th style="padding:6px 10px;text-align:left;border:1px solid #e2e8f0">Dược sĩ</th>
+          ${months.map(m=>{const[y,mo]=m.split('-');return`<th style="padding:6px 10px;text-align:center;border:1px solid #e2e8f0">T${mo}/${y.slice(2)}</th>`;}).join('')}
+          <th style="padding:6px 10px;text-align:center;border:1px solid #e2e8f0;background:#0d9488;color:white">Tổng</th>
+        </tr></thead>
+        <tbody>${dsRows}</tbody>
+      </table></div>
+    </div>`;
+}
+
+function exportCounselingWord() {
+  const now = new Date();
+  const monthStr = `Tháng ${now.getMonth()+1}/${now.getFullYear()}`;
+  const data = [...counselingList].sort((a,b)=>(a.date||'').localeCompare(b.date||''));
+
+  const rows = data.map((c,i) => `<tr>
+    <td style="border:1px solid #000;padding:4pt 6pt;text-align:center">${i+1}</td>
+    <td style="border:1px solid #000;padding:4pt 6pt">${formatDate(c.date)}</td>
+    <td style="border:1px solid #000;padding:4pt 6pt">${c.name||'—'}<br><span style="font-size:9pt;color:#666">${c.code?'Mã: '+c.code:''} ${c.age?c.age+'t':''} ${c.gender||''}</span></td>
+    <td style="border:1px solid #000;padding:4pt 6pt">${c.diagnosis||'—'}</td>
+    <td style="border:1px solid #000;padding:4pt 6pt">${c.drugs||'—'}</td>
+    <td style="border:1px solid #000;padding:4pt 6pt">${(c.topics||[]).map(t=>CSL_TOPICS[t]||t).join('; ')}</td>
+    <td style="border:1px solid #000;padding:4pt 6pt;text-align:center">${c.duration?c.duration+' phút':'—'}</td>
+    <td style="border:1px solid #000;padding:4pt 6pt">${c.pharmacist||'—'}</td>
+  </tr>`).join('');
+
+  const html = `<!DOCTYPE html><html><head><meta charset="UTF-8">
+  <style>@page{margin:2cm 1.5cm;}body{font-family:'Times New Roman',serif;font-size:11pt;}</style>
+  </head><body>
+  <div style="text-align:center;margin-bottom:14pt">
+    <b>BỆNH VIỆN ĐA KHOA HẢI HẬU</b><br>
+    <b style="font-size:14pt">BẢNG THỐNG KÊ TƯ VẤN SỬ DỤNG THUỐC NGOẠI TRÚ</b><br>
+    <span style="font-size:10pt">${monthStr} · Tổng: ${data.length} lượt · Xuất ngày ${now.toLocaleDateString('vi-VN')}</span>
+  </div>
+  <table style="width:100%;border-collapse:collapse;font-size:10pt">
+    <thead><tr style="background:#0d9488">
+      <th style="border:1px solid #000;padding:5pt;color:white;text-align:center">STT</th>
+      <th style="border:1px solid #000;padding:5pt;color:white">Ngày</th>
+      <th style="border:1px solid #000;padding:5pt;color:white">Bệnh nhân</th>
+      <th style="border:1px solid #000;padding:5pt;color:white">Chẩn đoán</th>
+      <th style="border:1px solid #000;padding:5pt;color:white">Thuốc tư vấn</th>
+      <th style="border:1px solid #000;padding:5pt;color:white">Chủ đề tư vấn</th>
+      <th style="border:1px solid #000;padding:5pt;color:white;text-align:center">TG (phút)</th>
+      <th style="border:1px solid #000;padding:5pt;color:white">Dược sĩ</th>
+    </tr></thead>
+    <tbody>${rows}</tbody>
+  </table>
+  </body></html>`;
+
+  const blob = new Blob(['\ufeff'+html], {type:'application/msword;charset=utf-8'});
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  a.download = `TuVanNgoaiTru_${now.getFullYear()}${String(now.getMonth()+1).padStart(2,'0')}.doc`;
+  a.click();
+  showToast('Đã xuất Word!');
+}
+
+function loadCounselingFromFirebase() {
+  if (!window._db || !window._getDocs || !window._col) return;
+  window._getDocs(window._col(window._db, 'outpatient_counseling'))
+    .then(snap => {
+      counselingList = snap.docs.map(d => ({...d.data(), id: d.data().id || parseInt(d.id) || d.id}));
+      renderCounseling();
+    }).catch(e => console.error('Counseling load error:', e));
+
+  if (window._onSnapshot && window._col) {
+    window._onSnapshot(window._col(window._db, 'outpatient_counseling'), snap => {
+      counselingList = snap.docs.map(d => ({...d.data(), id: d.data().id || parseInt(d.id) || d.id}));
+      renderCounseling();
+    }, e => console.error(e));
+  }
+}
+
+// ─── END MODULE COUNSELING ──────────────────────────
 
 // ═══════════════════════════════════════════════════
 // MODULE: TẬP HUẤN & ĐÀO TẠO
@@ -6617,6 +7242,21 @@ function renderPharmacistStats() {
     q => q.date || '',
     null,
     'rep-qa-month-headers', 'rep-qa-by-ds'
+  );
+
+  // Tư vấn ngoại trú
+  const fCsl = mf ? counselingList.filter(c=>(c.date||'').startsWith(mf)) : counselingList;
+  const today = new Date().toISOString().split('T')[0];
+  const thisMonth = new Date().toISOString().slice(0,7);
+  document.getElementById('rep-csl-today').textContent = counselingList.filter(c=>c.date===today).length;
+  document.getElementById('rep-csl-month').textContent = counselingList.filter(c=>(c.date||'').startsWith(thisMonth)).length;
+  document.getElementById('rep-csl-total').textContent = counselingList.length;
+
+  buildTable(fCsl,
+    c => c.pharmacist || 'Dược sĩ',
+    c => c.date || '',
+    null,
+    'rep-csl-month-headers', 'rep-csl-by-ds'
   );
 }
 
