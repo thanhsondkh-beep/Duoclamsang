@@ -927,6 +927,9 @@ div[class^="tiktok"].--savior-overlay-z-index-reset {
   <div class="nav-item" onclick="goPage(&#39;druginfo&#39;)">
     <span class="icon">📋</span> Thông tin thuốc HIS
   </div>
+  <div class="nav-item" onclick="goPage(&#39;catalog&#39;)">
+    <span class="icon">💊</span> Danh mục thuốc
+  </div>
   <div class="nav-item" onclick="goPage(&#39;counseling&#39;)">
     <span class="icon">🩺</span> Tư vấn ngoại trú
   </div>
@@ -1682,6 +1685,52 @@ div[class^="tiktok"].--savior-overlay-z-index-reset {
         </iframe>
       </div>
     </div><!-- end page-tuongtac -->
+
+    <!-- CATALOG PAGE: QUẢN LÝ DANH MỤC THUỐC -->
+    <div class="page" id="page-catalog">
+      <!-- Stat cards -->
+      <div id="cat-stats" style="display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-bottom:14px"></div>
+
+      <!-- Bộ lọc + nút thêm -->
+      <div style="display:flex;gap:8px;margin-bottom:12px;flex-wrap:wrap;align-items:center">
+        <input type="text" id="cat-search" placeholder="🔍 Tìm tên thuốc, hoạt chất..." oninput="catalogPage=1;renderCatalog()"
+          style="flex:1;min-width:200px;padding:7px 10px;border:1.5px solid #e2e8f0;border-radius:8px;font-size:13px">
+        <select id="cat-dd-filter" onchange="catalogPage=1;renderCatalog()" style="padding:7px 10px;border:1.5px solid #e2e8f0;border-radius:8px;font-size:13px">
+          <option value="">Tất cả đường dùng</option>
+          <option>Uống</option><option>Tiêm TM</option><option>Tiêm bắp</option>
+          <option>Tiêm dưới da</option><option>Truyền TM</option><option>Khí dung</option>
+          <option>Nhỏ mắt</option><option>Nhỏ tai</option><option>Dán da</option><option>Khác</option>
+        </select>
+        <select id="cat-src-filter" onchange="catalogPage=1;renderCatalog()" style="padding:7px 10px;border:1.5px solid #e2e8f0;border-radius:8px;font-size:13px">
+          <option value="">Tất cả nguồn</option>
+          <option value="builtin">Danh mục gốc BV</option>
+          <option value="custom">Thuốc bổ sung</option>
+        </select>
+        <button class="btn btn-primary btn-sm" onclick="openAddCatalog()">+ Thêm thuốc</button>
+      </div>
+
+      <!-- Bảng -->
+      <div class="card" style="padding:0;overflow:hidden">
+        <div class="card-header" style="padding:10px 16px">
+          <div class="card-title">💊 Danh mục thuốc trong ứng dụng</div>
+          <span id="cat-count" style="font-size:12px;color:#64748b"></span>
+        </div>
+        <div class="table-wrap">
+          <table>
+            <thead><tr>
+              <th style="width:45px;text-align:center">STT</th>
+              <th>Tên thuốc (biệt dược)</th>
+              <th>Hoạt chất</th>
+              <th>Hàm lượng</th>
+              <th>Đường dùng</th>
+              <th style="width:90px"></th>
+            </tr></thead>
+            <tbody id="cat-table"></tbody>
+          </table>
+        </div>
+      </div>
+      <div id="cat-pagination"></div>
+    </div><!-- end page-catalog -->
 
     <!-- DRUGINFO PAGE: THÔNG TIN THUỐC HIS -->
     <div class="page" id="page-druginfo">
@@ -2592,6 +2641,46 @@ div[class^="tiktok"].--savior-overlay-z-index-reset {
   </div>
 </div>
 
+<!-- MODAL: THÊM/SỬA THUỐC DANH MỤC -->
+<div class="modal-overlay" id="modal-catalog">
+  <div class="modal" style="max-width:500px;width:95vw">
+    <div class="modal-header">
+      <div class="modal-title" id="cat-form-modal-title">➕ Thêm thuốc vào danh mục</div>
+      <button class="modal-close" onclick="closeModal(&#39;modal-catalog&#39;)">✕</button>
+    </div>
+    <div class="modal-body">
+      <input type="hidden" id="cat-editing-idx">
+      <div class="form-group">
+        <label class="form-label">Hoạt chất <span class="required">*</span></label>
+        <input type="text" id="cat-f-hc" placeholder="VD: Amlodipine, Metformin HCl...">
+      </div>
+      <div class="form-group" style="margin-top:10px">
+        <label class="form-label">Tên biệt dược</label>
+        <input type="text" id="cat-f-ten" placeholder="VD: Amlor, Glucophage... (để trống = dùng hoạt chất)">
+      </div>
+      <div class="form-grid form-grid-2" style="margin-top:10px">
+        <div class="form-group">
+          <label class="form-label">Nồng độ / Hàm lượng</label>
+          <input type="text" id="cat-f-hl" placeholder="VD: 5mg, 500mg, 10mg/5mL...">
+        </div>
+        <div class="form-group">
+          <label class="form-label">Đường dùng</label>
+          <select id="cat-f-dd">
+            <option>Uống</option><option>Tiêm TM</option><option>Tiêm bắp</option>
+            <option>Tiêm dưới da</option><option>Truyền TM</option><option>Khí dung</option>
+            <option>Nhỏ mắt</option><option>Nhỏ tai</option><option>Dán da</option>
+            <option>Đặt dưới lưỡi</option><option>Bôi ngoài da</option><option>Khác</option>
+          </select>
+        </div>
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-outline" onclick="closeModal(&#39;modal-catalog&#39;)">Huỷ</button>
+      <button class="btn btn-primary" onclick="saveCatalogDrug()">💾 Lưu</button>
+    </div>
+  </div>
+</div>
+
 <!-- MODAL: THÔNG TIN THUỐC HIS -->
 <div class="modal-overlay" id="modal-druginfo">
   <div class="modal" style="max-width:820px;width:95vw">
@@ -2618,10 +2707,42 @@ div[class^="tiktok"].--savior-overlay-z-index-reset {
       </div>
 
       <div class="form-group" style="margin-top:10px">
-        <label class="form-label">Tên thuốc <span class="required">*</span></label>
-        <input type="text" id="di-drug" placeholder="Gõ tên thuốc..." autocomplete="off"
+        <label class="form-label">Tên thuốc (biệt dược) <span class="required">*</span></label>
+        <input type="text" id="di-drug" placeholder="Gõ tên biệt dược hoặc hoạt chất..." autocomplete="off"
           oninput="diFilterDrug(this.value)" style="position:relative">
-        <div id="di-drug-dd" style="display:none;position:absolute;background:white;border:1.5px solid #e2e8f0;border-radius:10px;box-shadow:0 8px 20px rgba(0,0,0,.1);z-index:200;max-height:180px;overflow-y:auto;width:400px"></div>
+        <div id="di-drug-dd" style="display:none;position:absolute;background:white;border:1.5px solid #e2e8f0;border-radius:10px;box-shadow:0 8px 20px rgba(0,0,0,.1);z-index:200;max-height:180px;overflow-y:auto;width:500px"></div>
+      </div>
+
+      <div class="form-grid form-grid-3" style="margin-top:10px">
+        <div class="form-group">
+          <label class="form-label">Hoạt chất <span class="required">*</span></label>
+          <input type="text" id="di-hoatchat" placeholder="VD: Amlodipine, Metformin...">
+        </div>
+        <div class="form-group">
+          <label class="form-label">Nồng độ / Hàm lượng</label>
+          <input type="text" id="di-hamluong" placeholder="VD: 5mg, 500mg, 10mg/5mL...">
+        </div>
+        <div class="form-group">
+          <label class="form-label">Đường dùng</label>
+          <select id="di-duongdung">
+            <option value="">-- Chọn --</option>
+            <option>Uống</option>
+            <option>Tiêm TM</option>
+            <option>Tiêm bắp</option>
+            <option>Tiêm dưới da</option>
+            <option>Truyền TM</option>
+            <option>Khí dung</option>
+            <option>Nhỏ mắt</option>
+            <option>Nhỏ tai</option>
+            <option>Dán da</option>
+            <option>Đặt dưới lưỡi</option>
+            <option>Bôi ngoài da</option>
+            <option>Khác</option>
+          </select>
+        </div>
+      </div>
+      <div style="font-size:11px;color:#0d9488;background:#f0fdf4;border:1px solid #86efac;border-radius:6px;padding:5px 10px;margin-top:4px">
+        💡 Khi lưu, thuốc này sẽ tự động được bổ sung vào danh mục thuốc của ứng dụng (nếu chưa có)
       </div>
 
       <div class="form-group" style="margin-top:10px">
@@ -3266,6 +3387,7 @@ async function loadFromFirebase() {
     syncPhieu();
     loadQAFromFirebase();
     loadCounselingFromFirebase();
+    loadCustomDrugCatalog();
     loadDrugInfoFromFirebase();
     loadTrainingsFromFirebase();
     showToast('Đã tải dữ liệu thành công!');
@@ -3680,6 +3802,7 @@ function goPage(id) {
     adr:       'Báo cáo phản ứng có hại (ADR)',
     training:   'Tập huấn & Đào tạo',
     druginfo:   'Thông tin thuốc HIS',
+    catalog:    'Quản lý danh mục thuốc',
     counseling: 'Tư vấn sử dụng thuốc ngoại trú'
   };
   document.getElementById('topbar-title').textContent = titles[id] || '';
@@ -3687,6 +3810,7 @@ function goPage(id) {
   if (id === 'report') { updateReport(); renderPharmacistStats(); }
   if (id === 'counseling') renderCounseling();
   if (id === 'druginfo') renderDrugInfo();
+  if (id === 'catalog') renderCatalog();
   syncBottomNav(id);
   closeMobileSidebar();
 }
@@ -4914,6 +5038,183 @@ function openAddPatient() {
   openModal('modal-patient');
 }
 
+// ── TỰ ĐỘNG CẬP NHẬT DRUG_CATALOG ─────────────────
+function addToDrugCatalog(hc, ten, hl, dd) {
+  if (!hc) return;
+  // Kiểm tra đã tồn tại chưa
+  const exists = DRUG_CATALOG.some(d =>
+    d.hc.toLowerCase() === hc.toLowerCase() &&
+    (d.ten||'').toLowerCase() === (ten||'').toLowerCase() &&
+    (d.hl||'') === (hl||'')
+  );
+  if (exists) return;
+  const newDrug = { hc: hc.trim(), ten: (ten||hc).trim(), hl: (hl||'').trim(), dd: (dd||'Uống').trim() };
+  DRUG_CATALOG.push(newDrug);
+  // Lưu vào Firestore để đồng bộ
+  saveToFirebase('drug_catalog_custom', Date.now(), newDrug).catch(() => {});
+  showToast(`✅ Đã thêm "${newDrug.ten}" vào danh mục thuốc!`);
+}
+
+function loadCustomDrugCatalog() {
+  if (!window._db || !window._getDocs || !window._col) return;
+  window._getDocs(window._col(window._db, 'drug_catalog_custom'))
+    .then(snap => {
+      snap.docs.forEach(d => {
+        const drug = d.data();
+        if (!drug.hc) return;
+        const exists = DRUG_CATALOG.some(x =>
+          x.hc.toLowerCase() === drug.hc.toLowerCase() &&
+          (x.ten||'').toLowerCase() === (drug.ten||'').toLowerCase() &&
+          (x.hl||'') === (drug.hl||'')
+        );
+        if (!exists) DRUG_CATALOG.push(drug);
+      });
+    }).catch(e => console.error('Custom catalog load error:', e));
+}
+
+// ═══════════════════════════════════════════════════
+// MODULE: QUẢN LÝ DANH MỤC THUỐC
+// ═══════════════════════════════════════════════════
+let catalogPage = 1;
+const CATALOG_PAGE_SIZE = 20;
+
+function renderCatalog() {
+  const q     = (document.getElementById('cat-search')?.value || '').toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g,'');
+  const ddF   = document.getElementById('cat-dd-filter')?.value || '';
+  const srcF  = document.getElementById('cat-src-filter')?.value || '';
+
+  let data = DRUG_CATALOG.filter(d => {
+    if (ddF && (d.dd||'') !== ddF) return false;
+    if (srcF === 'custom') return !!d._custom;
+    if (srcF === 'builtin') return !d._custom;
+    if (!q) return true;
+    const txt = (d.ten+' '+d.hc+' '+d.hl).toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g,'');
+    return txt.includes(q);
+  });
+
+  // Stat
+  const total   = DRUG_CATALOG.length;
+  const custom  = DRUG_CATALOG.filter(d => d._custom).length;
+  const builtin = total - custom;
+  document.getElementById('cat-stats').innerHTML = `
+    <div style="background:#f0fdf4;border:1px solid #86efac;border-radius:10px;padding:10px 16px;text-align:center">
+      <div style="font-size:22px;font-weight:800;color:#0d9488">${total}</div>
+      <div style="font-size:11px;color:#64748b;margin-top:2px">Tổng thuốc</div>
+    </div>
+    <div style="background:#eff6ff;border:1px solid #93c5fd;border-radius:10px;padding:10px 16px;text-align:center">
+      <div style="font-size:22px;font-weight:800;color:#2563eb">${builtin}</div>
+      <div style="font-size:11px;color:#64748b;margin-top:2px">Danh mục gốc BV</div>
+    </div>
+    <div style="background:#fdf4ff;border:1px solid #e9d5ff;border-radius:10px;padding:10px 16px;text-align:center">
+      <div style="font-size:22px;font-weight:800;color:#7c3aed">${custom}</div>
+      <div style="font-size:11px;color:#64748b;margin-top:2px">Thuốc bổ sung thêm</div>
+    </div>`;
+
+  // Phân trang
+  const total_pages = Math.ceil(data.length / CATALOG_PAGE_SIZE);
+  if (catalogPage > total_pages) catalogPage = 1;
+  const pageData = data.slice((catalogPage-1)*CATALOG_PAGE_SIZE, catalogPage*CATALOG_PAGE_SIZE);
+
+  document.getElementById('cat-count').textContent = `${data.length} thuốc (trang ${catalogPage}/${total_pages||1})`;
+
+  const tbody = document.getElementById('cat-table');
+  if (!pageData.length) {
+    tbody.innerHTML = `<tr><td colspan="6" style="text-align:center;padding:20px;color:#94a3b8">Không tìm thấy thuốc nào</td></tr>`;
+  } else {
+    tbody.innerHTML = pageData.map((d, i) => {
+      const idx = DRUG_CATALOG.indexOf(d);
+      const isCustom = !!d._custom;
+      return `<tr>
+        <td style="font-size:12px;text-align:center;color:#94a3b8">${(catalogPage-1)*CATALOG_PAGE_SIZE+i+1}</td>
+        <td><span style="font-weight:600;font-size:13px">${d.ten||d.hc}</span>${isCustom?'<span style="margin-left:6px;font-size:10px;background:#fdf4ff;color:#7c3aed;padding:1px 6px;border-radius:10px;border:1px solid #e9d5ff">+Mới</span>':''}</td>
+        <td style="font-size:12px;color:#0d9488">${d.hc}</td>
+        <td style="font-size:12px">${d.hl||'—'}</td>
+        <td style="font-size:12px">${d.dd||'—'}</td>
+        <td style="white-space:nowrap">
+          <button class="btn btn-outline btn-sm" onclick="openEditCatalog(${idx})" style="color:#0d9488;border-color:#5eead4" title="Sửa">✏️</button>
+          ${isCustom?`<button class="btn btn-outline btn-sm" onclick="deleteCatalogDrug(${idx})" style="color:#ef4444;border-color:#fca5a5;margin-left:4px" title="Xóa">🗑</button>`:''}
+        </td>
+      </tr>`;
+    }).join('');
+  }
+
+  // Phân trang
+  let pgHtml = '';
+  if (total_pages > 1) {
+    pgHtml = `<div style="display:flex;gap:6px;justify-content:center;margin-top:10px;flex-wrap:wrap">`;
+    for (let p=1; p<=total_pages; p++) {
+      pgHtml += `<button onclick="catalogPage=${p};renderCatalog()"
+        style="padding:4px 10px;border:1.5px solid ${p===catalogPage?'#0d9488':'#e2e8f0'};background:${p===catalogPage?'#0d9488':'white'};color:${p===catalogPage?'white':'#374151'};border-radius:6px;cursor:pointer;font-size:12px">${p}</button>`;
+    }
+    pgHtml += '</div>';
+  }
+  document.getElementById('cat-pagination').innerHTML = pgHtml;
+}
+
+function openAddCatalog() {
+  document.getElementById('cat-form-modal-title').textContent = '➕ Thêm thuốc vào danh mục';
+  document.getElementById('cat-f-ten').value  = '';
+  document.getElementById('cat-f-hc').value   = '';
+  document.getElementById('cat-f-hl').value   = '';
+  document.getElementById('cat-f-dd').value   = 'Uống';
+  document.getElementById('cat-editing-idx').value = '';
+  openModal('modal-catalog');
+}
+
+function openEditCatalog(idx) {
+  const d = DRUG_CATALOG[idx];
+  if (!d) return;
+  document.getElementById('cat-form-modal-title').textContent = '✏️ Sửa thông tin thuốc';
+  document.getElementById('cat-f-ten').value  = d.ten  || '';
+  document.getElementById('cat-f-hc').value   = d.hc   || '';
+  document.getElementById('cat-f-hl').value   = d.hl   || '';
+  document.getElementById('cat-f-dd').value   = d.dd   || 'Uống';
+  document.getElementById('cat-editing-idx').value = idx;
+  openModal('modal-catalog');
+}
+
+function saveCatalogDrug() {
+  const ten = document.getElementById('cat-f-ten').value.trim();
+  const hc  = document.getElementById('cat-f-hc').value.trim();
+  const hl  = document.getElementById('cat-f-hl').value.trim();
+  const dd  = document.getElementById('cat-f-dd').value;
+  if (!hc) { showToast('Vui lòng nhập hoạt chất!', false); return; }
+
+  const editIdx = document.getElementById('cat-editing-idx').value;
+  if (editIdx !== '') {
+    // Sửa
+    const idx = parseInt(editIdx);
+    DRUG_CATALOG[idx] = { ...DRUG_CATALOG[idx], ten: ten||hc, hc, hl, dd };
+    if (DRUG_CATALOG[idx]._custom) {
+      saveToFirebase('drug_catalog_custom', DRUG_CATALOG[idx]._id||Date.now(),
+        { ten: ten||hc, hc, hl, dd, _custom: true, _id: DRUG_CATALOG[idx]._id }).catch(() => {});
+    }
+    showToast('Đã cập nhật!');
+  } else {
+    // Thêm mới
+    const id = Date.now();
+    const newDrug = { ten: ten||hc, hc, hl, dd, _custom: true, _id: id };
+    DRUG_CATALOG.push(newDrug);
+    saveToFirebase('drug_catalog_custom', id, newDrug).catch(() => {});
+    showToast(`✅ Đã thêm "${ten||hc}" vào danh mục!`);
+  }
+  closeModal('modal-catalog');
+  renderCatalog();
+}
+
+function deleteCatalogDrug(idx) {
+  const d = DRUG_CATALOG[idx];
+  if (!d || !d._custom) { showToast('Chỉ có thể xóa thuốc đã bổ sung thêm!', false); return; }
+  if (!confirm(`Xóa "${d.ten||d.hc}" khỏi danh mục?`)) return;
+  if (d._id && window._deleteDoc && window._doc && window._db)
+    window._deleteDoc(window._doc(window._db, 'drug_catalog_custom', String(d._id))).catch(() => {});
+  DRUG_CATALOG.splice(idx, 1);
+  renderCatalog();
+  showToast('Đã xóa!');
+}
+
+// ─── END MODULE CATALOG ─────────────────────────────
+
 // ═══════════════════════════════════════════════════
 // MODULE: THÔNG TIN THUỐC HIS
 // ═══════════════════════════════════════════════════
@@ -4939,16 +5240,28 @@ function diFilterDrug(q) {
     .filter(d => (d.ten+' '+d.hc).toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g,'').includes(nq))
     .slice(0,30);
   if (!matches.length) { dd.style.display='none'; return; }
-  // Dedupe theo hoạt chất
   const seen = new Set();
-  const unique = matches.filter(d => { const k=d.hc; if(seen.has(k)) return false; seen.add(k); return true; });
+  const unique = matches.filter(d => { const k=d.hc+'|'+d.hl; if(seen.has(k)) return false; seen.add(k); return true; });
   dd.innerHTML = unique.map(d => `
-    <div onclick="document.getElementById('di-drug').value='${(d.ten||d.hc).replace(/'/g,"\\'")}';document.getElementById('di-drug-dd').style.display='none'"
-      style="padding:7px 12px;font-size:12px;cursor:pointer;border-bottom:1px solid #f8fafc"
+    <div onclick="diSelectDrug('${(d.ten||'').replace(/'/g,"\\'")}','${(d.hc||'').replace(/'/g,"\\'")}','${(d.hl||'').replace(/'/g,"\\'")}','${(d.dd||'').replace(/'/g,"\\'")}') "
+      style="padding:7px 12px;font-size:12px;cursor:pointer;border-bottom:1px solid #f8fafc;display:flex;justify-content:space-between;align-items:center"
       onmouseover="this.style.background='#f0fdf4'" onmouseout="this.style.background=''">
-      <strong>${d.ten||d.hc}</strong> <span style="color:#64748b;font-size:11px">${d.ten?'('+d.hc+')':''} · ${d.hl}</span>
+      <span><strong>${d.ten||d.hc}</strong> <span style="color:#64748b;font-size:11px">${d.ten?'('+d.hc+')':''}</span></span>
+      <span style="color:#0d9488;font-size:11px;white-space:nowrap">${d.hl} · ${d.dd}</span>
     </div>`).join('');
   dd.style.display = 'block';
+}
+
+function diSelectDrug(ten, hc, hl, dd) {
+  document.getElementById('di-drug').value       = ten || hc;
+  document.getElementById('di-hoatchat').value   = hc;
+  document.getElementById('di-hamluong').value   = hl;
+  const ddSel = document.getElementById('di-duongdung');
+  if (ddSel && dd) {
+    const opt = [...ddSel.options].find(o => dd.toLowerCase().includes(o.value.toLowerCase()) || o.value.toLowerCase().includes(dd.toLowerCase()));
+    if (opt) ddSel.value = opt.value;
+  }
+  document.getElementById('di-drug-dd').style.display = 'none';
 }
 
 function openDrugInfoForm(id = null) {
@@ -4962,6 +5275,9 @@ function openDrugInfoForm(id = null) {
     document.getElementById('di-date').value       = d.date || '';
     document.getElementById('di-pharmacist').value = d.pharmacist || '';
     document.getElementById('di-drug').value       = d.drug || '';
+    document.getElementById('di-hoatchat').value   = d.hoatchat || '';
+    document.getElementById('di-hamluong').value   = d.hamluong || '';
+    document.getElementById('di-duongdung').value  = d.duongdung || '';
     document.getElementById('di-note').value       = d.note || '';
     document.getElementById('di-doc-url').value    = d.docUrl || '';
     DI_FIELDS.forEach(f => {
@@ -4972,7 +5288,7 @@ function openDrugInfoForm(id = null) {
     });
   } else {
     document.getElementById('di-modal-title').textContent = '📋 Thêm thông tin thuốc HIS';
-    ['di-drug','di-note','di-doc-url'].forEach(i => {
+    ['di-drug','di-hoatchat','di-hamluong','di-note','di-doc-url'].forEach(i => {
       const el=document.getElementById(i); if(el) el.value='';
     });
     document.getElementById('di-date').value       = today;
@@ -4988,8 +5304,13 @@ function openDrugInfoForm(id = null) {
 }
 
 function saveDrugInfo() {
-  const drug = document.getElementById('di-drug').value.trim();
-  if (!drug) { showToast('Vui lòng nhập tên thuốc!', false); return; }
+  const drug      = document.getElementById('di-drug').value.trim();
+  const hoatchat  = document.getElementById('di-hoatchat').value.trim();
+  if (!drug && !hoatchat) { showToast('Vui lòng nhập tên thuốc hoặc hoạt chất!', false); return; }
+  if (!hoatchat) { showToast('Vui lòng nhập hoạt chất!', false); return; }
+
+  const hamluong  = document.getElementById('di-hamluong').value.trim();
+  const duongdung = document.getElementById('di-duongdung').value;
 
   const fields = {};
   DI_FIELDS.forEach(f => {
@@ -5003,7 +5324,8 @@ function saveDrugInfo() {
     id:         editingDIId || Date.now(),
     date:       document.getElementById('di-date').value,
     pharmacist: document.getElementById('di-pharmacist').value.trim() || 'Dược sĩ',
-    drug,
+    drug:       drug || hoatchat,
+    hoatchat, hamluong, duongdung,
     note:       document.getElementById('di-note').value.trim(),
     docUrl:     document.getElementById('di-doc-url').value.trim(),
     fields,
@@ -5014,6 +5336,8 @@ function saveDrugInfo() {
     if (idx >= 0) drugInfoList[idx] = d;
   } else {
     drugInfoList.push(d);
+    // Tự động thêm vào DRUG_CATALOG nếu chưa có
+    addToDrugCatalog(hoatchat, drug, hamluong, duongdung);
   }
 
   saveToFirebase('drug_info_his', d.id, d).catch(() => {});
