@@ -1553,6 +1553,22 @@ div[class^="tiktok"].--savior-overlay-z-index-reset {
           </div>
         </div>
       </div>
+
+      <!-- ===== MODULE PHÂN TÍCH ADR (KHẢO SÁT ADR) ===== -->
+      <div class="card" style="margin-top:16px" id="adr-analysis-module">
+        <div class="card-header" style="background:linear-gradient(135deg,#fef3c7,#fde68a);border-bottom:2px solid #f59e0b">
+          <div class="card-title" style="color:#92400e;font-size:15px">📑 Phân tích báo cáo ADR (Khảo sát ADR)</div>
+          <div style="display:flex;gap:8px;flex-wrap:wrap">
+            <select id="adr-analysis-year" onchange="renderAdrAnalysis()" style="padding:5px 10px;border:1.5px solid #fbbf24;border-radius:8px;font-size:12px;background:white">
+              <option value="">-- Chọn năm --</option>
+            </select>
+            <button class="btn btn-sm" onclick="exportAdrAnalysisWord()" style="background:#f59e0b;color:white;border:none;padding:5px 14px;border-radius:8px;font-size:12px;cursor:pointer">📄 Xuất Word</button>
+          </div>
+        </div>
+        <div class="card-body" id="adr-analysis-body" style="padding:16px">
+          <div class="empty"><div class="empty-icon">📑</div><div class="empty-text">Chọn năm để xem phân tích ADR</div></div>
+        </div>
+      </div>
     </div>
 
     </div>
@@ -3807,7 +3823,7 @@ function goPage(id) {
   };
   document.getElementById('topbar-title').textContent = titles[id] || '';
   event.currentTarget.classList.add('active');
-  if (id === 'report') { updateReport(); renderPharmacistStats(); }
+  if (id === 'report') { updateReport(); renderPharmacistStats(); initAdrAnalysisYear(); }
   if (id === 'counseling') renderCounseling();
   if (id === 'druginfo') renderDrugInfo();
   if (id === 'catalog') renderCatalog();
@@ -4225,6 +4241,438 @@ function exportAdrSummaryExcel() {
   showToast('Đã xuất Excel tổng hợp ADR!');
 }
 
+// ===================== PHÂN TÍCH ADR (KHẢO SÁT) =====================
+function initAdrAnalysisYear() {
+  const sel = document.getElementById('adr-analysis-year');
+  if (!sel) return;
+  const years = [...new Set(adrs.map(a => (a.adrDate||'').slice(0,4)).filter(y=>y))].sort((a,b)=>b-a);
+  const curYear = new Date().getFullYear().toString();
+  sel.innerHTML = '<option value="">-- Chọn năm --</option>' + years.map(y=>`<option value="${y}" ${y===curYear?'selected':''}>${y}</option>`).join('');
+  if (years.includes(curYear)) renderAdrAnalysis();
+  else if (years.length) { sel.value = years[0]; renderAdrAnalysis(); }
+}
+
+function renderAdrAnalysis() {
+  const year = document.getElementById('adr-analysis-year')?.value || '';
+  const body = document.getElementById('adr-analysis-body');
+  if (!body) return;
+  const data = year ? adrs.filter(a => (a.adrDate||'').startsWith(year)) : adrs;
+  if (!data.length) {
+    body.innerHTML = '<div class="empty"><div class="empty-icon">📑</div><div class="empty-text">Không có dữ liệu ADR' + (year?' năm '+year:'') + '</div></div>';
+    return;
+  }
+  const total = data.length;
+
+  // Helper: phân loại nhóm dược lý từ tên thuốc
+  function classifyDrug(name) {
+    const n = (name||'').toLowerCase();
+    if (n.includes('cef')||n.includes('ampi')||n.includes('amox')||n.includes('cipro')||n.includes('levo')||n.includes('genta')||n.includes('peni')||n.includes('erythro')||n.includes('bisep')||n.includes('metro')||n.includes('oxacil')||n.includes('ampicil')||n.includes('azithro')||n.includes('doxycycl')||n.includes('clarithro')) return 'Kháng sinh';
+    if (n.includes('diclof')||n.includes('ibuprof')||n.includes('piroxicam')||n.includes('meloxicam')||n.includes('ketoprofen')||n.includes('indometha')) return 'NSAIDs';
+    if (n.includes('paracetamol')||n.includes('acetamin')) return 'Giảm đau - Hạ sốt';
+    if (n.includes('dexamethas')||n.includes('prednisolon')||n.includes('methylpred')||n.includes('hydrocortis')) return 'Corticosteroid';
+    if (n.includes('omeprazol')||n.includes('pantoprazol')||n.includes('esomeprazol')||n.includes('lansoprazol')) return 'Ức chế bơm proton';
+    if (n.includes('furosem')||n.includes('spironolacton')||n.includes('hydrochloro')) return 'Lợi tiểu';
+    if (n.includes('captopril')||n.includes('enalapril')||n.includes('losartan')||n.includes('amlodip')||n.includes('nifedipin')||n.includes('verapamil')) return 'Tim mạch';
+    if (n.includes('insulin')||n.includes('metformin')||n.includes('glibenclamid')) return 'Đái tháo đường';
+    return 'Khác';
+  }
+
+  // 1. Theo tháng
+  const byMonth = {};
+  for (let m=1;m<=12;m++) byMonth[String(m).padStart(2,'0')] = 0;
+  data.forEach(a => { const m=(a.adrDate||'').slice(5,7); if(m) byMonth[m] = (byMonth[m]||0)+1; });
+
+  // 2. Tuổi — dùng đúng field ptAge
+  const ageBuckets = {'Dưới 18 tuổi':0,'18 - 60 tuổi':0,'Trên 60 tuổi':0};
+  data.forEach(a => {
+    const age = parseInt(a.ptAge||a.age||0);
+    if (!age) { ageBuckets['18 - 60 tuổi']++; return; } // nếu không có tuổi ghi vào nhóm lớn nhất
+    if (age < 18) ageBuckets['Dưới 18 tuổi']++;
+    else if (age <= 60) ageBuckets['18 - 60 tuổi']++;
+    else ageBuckets['Trên 60 tuổi']++;
+  });
+
+  // 3. Giới tính — dùng đúng field ptGender
+  const gender = {'Nam':0,'Nữ':0};
+  data.forEach(a => {
+    const g = (a.ptGender||a.gender||'').trim();
+    if (g==='Nữ'||g==='nữ') gender['Nữ']++;
+    else gender['Nam']++;
+  });
+
+  // 4. Tiền sử dị ứng — dùng đúng field history
+  const allergy = {'Dị ứng thuốc':0,'Dị ứng tác nhân khác':0,'Không có tiền sử dị ứng':0};
+  data.forEach(a => {
+    const h = (a.history||a.allergyHistory||'').toLowerCase().trim();
+    if (!h || h==='không'||h==='ko'||h==='không có'||h==='không dị ứng') allergy['Không có tiền sử dị ứng']++;
+    else if (h.includes('thuốc')) allergy['Dị ứng thuốc']++;
+    else allergy['Dị ứng tác nhân khác']++;
+  });
+
+  // 5. Người báo cáo — field reporter
+  const reporters = {};
+  data.forEach(a => {
+    const r = (a.reporter||'').trim() || 'Khác';
+    reporters[r] = (reporters[r]||0)+1;
+  });
+
+  // 6. Khoa báo cáo — field dept
+  const depts = {};
+  data.forEach(a => {
+    const d = (a.dept||'').replace(/^Khoa\s*/i,'').trim() || 'Không xác định';
+    depts[d] = (depts[d]||0)+1;
+  });
+
+  // 7. Đường dùng — lấy từ a.drugs[].route (mảng thuốc nghi ngờ)
+  const routes = {};
+  data.forEach(a => {
+    const drugList = a.drugs||[];
+    if (drugList.length) {
+      drugList.forEach(d => {
+        const r = (d.route||'').trim() || 'Không rõ';
+        routes[r] = (routes[r]||0)+1;
+      });
+    } else {
+      routes['Không rõ'] = (routes['Không rõ']||0)+1;
+    }
+  });
+
+  // 8. Nhóm dược lý — từ a.drugs[].name
+  const pharmGroups = {};
+  data.forEach(a => {
+    const drugList = a.drugs||[];
+    if (drugList.length) {
+      drugList.forEach(d => {
+        const g = classifyDrug(d.name);
+        pharmGroups[g] = (pharmGroups[g]||0)+1;
+      });
+    } else {
+      pharmGroups['Không rõ'] = (pharmGroups['Không rõ']||0)+1;
+    }
+  });
+
+  // 9. Thuốc nghi ngờ — từ a.drugs[].name + route
+  const drugsMap = {}; // key: name, value: {cnt, routes}
+  data.forEach(a => {
+    (a.drugs||[]).forEach(d => {
+      const name = (d.name||'').trim() || 'Không rõ';
+      if (!drugsMap[name]) drugsMap[name] = {cnt:0, route: d.route||''};
+      drugsMap[name].cnt++;
+      if (!drugsMap[name].route && d.route) drugsMap[name].route = d.route;
+    });
+  });
+  const topDrugs = Object.entries(drugsMap).sort((a,b)=>b[1].cnt-a[1].cnt).slice(0,20);
+
+  // 10. Kết quả ADR — field outcome
+  const outcomes = {};
+  data.forEach(a => {
+    const o = (a.outcome||'').trim() || 'Chưa xác định';
+    outcomes[o] = (outcomes[o]||0)+1;
+  });
+
+  const pct = (n) => total ? (n/total*100).toFixed(1)+'%' : '0%';
+  const tableRows = (obj) => Object.entries(obj).filter(([,v])=>v>0).sort((a,b)=>b[1]-a[1])
+    .map(([k,v],i)=>`<tr><td>${i+1}</td><td>${k}</td><td style="text-align:center">${v}</td><td style="text-align:center">${pct(v)}</td></tr>`).join('');
+
+  const monthTableRows = Object.entries(byMonth).filter(([,v])=>v>0)
+    .map(([m,v],i)=>`<tr><td>${i+1}</td><td>Tháng ${parseInt(m)}</td><td style="text-align:center">${v}</td><td style="text-align:center">${pct(v)}</td></tr>`).join('');
+
+  // Tổng số thuốc nghi ngờ (có thể > total vì 1 báo cáo có nhiều thuốc)
+  const totalDrugs = Object.values(drugsMap).reduce((s,v)=>s+v.cnt,0);
+  const totalRoutes = Object.values(routes).reduce((s,v)=>s+v,0);
+  const totalGroups = Object.values(pharmGroups).reduce((s,v)=>s+v,0);
+  const pctDrug = (n) => totalDrugs ? (n/totalDrugs*100).toFixed(1)+'%' : '0%';
+  const pctRoute = (n) => totalRoutes ? (n/totalRoutes*100).toFixed(1)+'%' : '0%';
+  const pctGroup = (n) => totalGroups ? (n/totalGroups*100).toFixed(1)+'%' : '0%';
+
+  body.innerHTML = `
+  <div style="background:#fffbeb;border:1px solid #fde68a;border-radius:8px;padding:14px 18px;margin-bottom:16px">
+    <div style="font-size:15px;font-weight:700;color:#92400e;margin-bottom:6px">📋 KHẢO SÁT BÁO CÁO ADR${year?' NĂM '+year:''} — BỆNH VIỆN ĐA KHOA HẢI HẬU</div>
+    <div style="font-size:13px;color:#78350f"><strong>Tổng số báo cáo phân tích: ${total} báo cáo</strong></div>
+  </div>
+
+  <div class="adr-analysis-section">
+    <div style="font-size:13px;font-weight:700;color:#0d9488;margin:14px 0 8px;border-left:4px solid #0d9488;padding-left:8px">3.1. Số lượng báo cáo ADR theo tháng</div>
+    <div class="table-wrap"><table>
+      <thead><tr><th style="width:40px">STT</th><th>Tháng</th><th style="text-align:center">Số báo cáo ADR</th><th style="text-align:center">Tỷ lệ (%)</th></tr></thead>
+      <tbody>${monthTableRows || '<tr><td colspan="4" style="text-align:center;color:#94a3b8">Chưa có dữ liệu</td></tr>'}</tbody>
+      <tfoot><tr style="background:#f0fdf4;font-weight:700"><td colspan="2">Tổng cộng</td><td style="text-align:center">${total}</td><td style="text-align:center">100%</td></tr></tfoot>
+    </table></div>
+  </div>
+
+  <div class="adr-analysis-section">
+    <div style="font-size:13px;font-weight:700;color:#0d9488;margin:14px 0 8px;border-left:4px solid #0d9488;padding-left:8px">3.2.1. Phân bố theo độ tuổi</div>
+    <div class="table-wrap"><table>
+      <thead><tr><th style="width:40px">STT</th><th>Độ tuổi (năm)</th><th style="text-align:center">Tần số</th><th style="text-align:center">Tỷ lệ (%)</th></tr></thead>
+      <tbody>${tableRows(ageBuckets)}</tbody>
+      <tfoot><tr style="background:#f0fdf4;font-weight:700"><td colspan="2">Tổng cộng</td><td style="text-align:center">${total}</td><td style="text-align:center">100%</td></tr></tfoot>
+    </table></div>
+  </div>
+
+  <div class="adr-analysis-section">
+    <div style="font-size:13px;font-weight:700;color:#0d9488;margin:14px 0 8px;border-left:4px solid #0d9488;padding-left:8px">3.2.2. Phân bố theo giới tính</div>
+    <div class="table-wrap"><table>
+      <thead><tr><th style="width:40px">STT</th><th>Giới tính</th><th style="text-align:center">Số lượng</th><th style="text-align:center">Tỷ lệ (%)</th></tr></thead>
+      <tbody>${tableRows(gender)}</tbody>
+      <tfoot><tr style="background:#f0fdf4;font-weight:700"><td colspan="2">Tổng cộng</td><td style="text-align:center">${total}</td><td style="text-align:center">100%</td></tr></tfoot>
+    </table></div>
+  </div>
+
+  <div class="adr-analysis-section">
+    <div style="font-size:13px;font-weight:700;color:#0d9488;margin:14px 0 8px;border-left:4px solid #0d9488;padding-left:8px">3.2.3. Tiền sử dị ứng</div>
+    <div class="table-wrap"><table>
+      <thead><tr><th style="width:40px">STT</th><th>Dị ứng</th><th style="text-align:center">Số lượng</th><th style="text-align:center">Tỷ lệ (%)</th></tr></thead>
+      <tbody>${tableRows(allergy)}</tbody>
+      <tfoot><tr style="background:#f0fdf4;font-weight:700"><td colspan="2">Tổng cộng</td><td style="text-align:center">${total}</td><td style="text-align:center">100%</td></tr></tfoot>
+    </table></div>
+  </div>
+
+  <div class="adr-analysis-section">
+    <div style="font-size:13px;font-weight:700;color:#0d9488;margin:14px 0 8px;border-left:4px solid #0d9488;padding-left:8px">3.3.1. Đối tượng báo cáo ADR</div>
+    <div class="table-wrap"><table>
+      <thead><tr><th style="width:40px">STT</th><th>Người báo cáo</th><th style="text-align:center">Số lượng</th><th style="text-align:center">Tỷ lệ (%)</th></tr></thead>
+      <tbody>${tableRows(reporters)}</tbody>
+      <tfoot><tr style="background:#f0fdf4;font-weight:700"><td colspan="2">Tổng cộng</td><td style="text-align:center">${total}</td><td style="text-align:center">100%</td></tr></tfoot>
+    </table></div>
+  </div>
+
+  <div class="adr-analysis-section">
+    <div style="font-size:13px;font-weight:700;color:#0d9488;margin:14px 0 8px;border-left:4px solid #0d9488;padding-left:8px">3.3.2. Khoa/phòng báo cáo ADR</div>
+    <div class="table-wrap"><table>
+      <thead><tr><th style="width:40px">STT</th><th>Khoa/Phòng</th><th style="text-align:center">Số lượng</th><th style="text-align:center">Tỷ lệ (%)</th></tr></thead>
+      <tbody>${tableRows(depts)}</tbody>
+      <tfoot><tr style="background:#f0fdf4;font-weight:700"><td colspan="2">Tổng cộng</td><td style="text-align:center">${total}</td><td style="text-align:center">100%</td></tr></tfoot>
+    </table></div>
+  </div>
+
+  <div class="adr-analysis-section">
+    <div style="font-size:13px;font-weight:700;color:#0d9488;margin:14px 0 8px;border-left:4px solid #0d9488;padding-left:8px">3.4.1. Phân loại báo cáo ADR theo đường dùng thuốc</div>
+    <div class="table-wrap"><table>
+      <thead><tr><th style="width:40px">STT</th><th>Đường dùng</th><th style="text-align:center">Tần số</th><th style="text-align:center">Tỷ lệ (%)</th></tr></thead>
+      <tbody>${Object.entries(routes).filter(([,v])=>v>0).sort((a,b)=>b[1]-a[1]).map(([k,v],i)=>`<tr><td>${i+1}</td><td>${k}</td><td style="text-align:center">${v}</td><td style="text-align:center">${pctRoute(v)}</td></tr>`).join('')}</tbody>
+      <tfoot><tr style="background:#f0fdf4;font-weight:700"><td colspan="2">Tổng cộng</td><td style="text-align:center">${totalRoutes}</td><td style="text-align:center">100%</td></tr></tfoot>
+    </table></div>
+  </div>
+
+  <div class="adr-analysis-section">
+    <div style="font-size:13px;font-weight:700;color:#0d9488;margin:14px 0 8px;border-left:4px solid #0d9488;padding-left:8px">3.4.2. Nhóm dược lý hay được báo cáo</div>
+    <div class="table-wrap"><table>
+      <thead><tr><th style="width:40px">STT</th><th>Nhóm dược lý</th><th style="text-align:center">Số lượng</th><th style="text-align:center">Tỷ lệ (%)</th></tr></thead>
+      <tbody>${Object.entries(pharmGroups).filter(([,v])=>v>0).sort((a,b)=>b[1]-a[1]).map(([k,v],i)=>`<tr><td>${i+1}</td><td>${k}</td><td style="text-align:center">${v}</td><td style="text-align:center">${pctGroup(v)}</td></tr>`).join('')}</tbody>
+      <tfoot><tr style="background:#f0fdf4;font-weight:700"><td colspan="2">Tổng cộng</td><td style="text-align:center">${totalGroups}</td><td style="text-align:center">100%</td></tr></tfoot>
+    </table></div>
+  </div>
+
+  <div class="adr-analysis-section">
+    <div style="font-size:13px;font-weight:700;color:#0d9488;margin:14px 0 8px;border-left:4px solid #0d9488;padding-left:8px">3.4.3. Các thuốc nghi ngờ gây ADR (Top 20)</div>
+    <div class="table-wrap"><table>
+      <thead><tr><th style="width:40px">STT</th><th>Tên thuốc</th><th style="text-align:center">Đường dùng</th><th style="text-align:center">Số lượng</th><th style="text-align:center">Tỷ lệ (%)</th></tr></thead>
+      <tbody>${topDrugs.map(([name,obj],i)=>`<tr><td>${i+1}</td><td>${name}</td><td style="text-align:center">${obj.route||'—'}</td><td style="text-align:center">${obj.cnt}</td><td style="text-align:center">${pctDrug(obj.cnt)}</td></tr>`).join('')}</tbody>
+      <tfoot><tr style="background:#f0fdf4;font-weight:700"><td colspan="3">Tổng cộng</td><td style="text-align:center">${totalDrugs}</td><td style="text-align:center">100%</td></tr></tfoot>
+    </table></div>
+  </div>
+
+  <div class="adr-analysis-section">
+    <div style="font-size:13px;font-weight:700;color:#0d9488;margin:14px 0 8px;border-left:4px solid #0d9488;padding-left:8px">3.5. Diễn biến của ADR đã được ghi nhận</div>
+    <div class="table-wrap"><table>
+      <thead><tr><th style="width:40px">STT</th><th>Kết quả của ADR</th><th style="text-align:center">Số lượng</th><th style="text-align:center">Tỷ lệ (%)</th></tr></thead>
+      <tbody>${tableRows(outcomes)}</tbody>
+      <tfoot><tr style="background:#f0fdf4;font-weight:700"><td colspan="2">Tổng cộng</td><td style="text-align:center">${total}</td><td style="text-align:center">100%</td></tr></tfoot>
+    </table></div>
+  </div>
+  `;
+}
+
+function exportAdrAnalysisWord() {
+  const year = document.getElementById('adr-analysis-year')?.value || '';
+  const data = year ? adrs.filter(a => (a.adrDate||'').startsWith(year)) : adrs;
+  if (!data.length) { showToast('Chưa có dữ liệu ADR để xuất!', false); return; }
+  const total = data.length;
+  const pct = (n,tot) => tot ? (n/tot*100).toFixed(1)+'%' : '0%';
+
+  // Tái tính — dùng đúng field names
+  const byMonth = {};
+  for (let m=1;m<=12;m++) byMonth[String(m).padStart(2,'0')] = 0;
+  data.forEach(a => { const m=(a.adrDate||'').slice(5,7); if(m) byMonth[m]=(byMonth[m]||0)+1; });
+
+  const ageBuckets = {'Dưới 18 tuổi':0,'18 - 60 tuổi':0,'Trên 60 tuổi':0};
+  data.forEach(a => { const age=parseInt(a.ptAge||a.age||0); if(!age){ageBuckets['18 - 60 tuổi']++;}else if(age<18)ageBuckets['Dưới 18 tuổi']++;else if(age<=60)ageBuckets['18 - 60 tuổi']++;else ageBuckets['Trên 60 tuổi']++; });
+
+  const gender = {'Nam':0,'Nữ':0};
+  data.forEach(a => { const g=(a.ptGender||a.gender||'').trim(); if(g==='Nữ'||g==='nữ')gender['Nữ']++;else gender['Nam']++; });
+
+  const allergy={'Dị ứng thuốc':0,'Dị ứng tác nhân khác':0,'Không có tiền sử dị ứng':0};
+  data.forEach(a=>{const h=(a.history||a.allergyHistory||'').toLowerCase().trim();if(!h||h==='không'||h==='ko'||h.includes('không có')||h.includes('không dị ứng'))allergy['Không có tiền sử dị ứng']++;else if(h.includes('thuốc'))allergy['Dị ứng thuốc']++;else allergy['Dị ứng tác nhân khác']++;});
+
+  const reporters={};
+  data.forEach(a=>{const r=(a.reporter||'').trim()||'Khác';reporters[r]=(reporters[r]||0)+1;});
+
+  const depts={};
+  data.forEach(a=>{const d=(a.dept||'').replace(/^Khoa\s*/i,'').trim()||'Không xác định';depts[d]=(depts[d]||0)+1;});
+
+  const routes={};
+  data.forEach(a=>{(a.drugs||[]).forEach(d=>{const r=(d.route||'').trim()||'Không rõ';routes[r]=(routes[r]||0)+1;});if(!(a.drugs||[]).length)routes['Không rõ']=(routes['Không rõ']||0)+1;});
+
+  const pharmGroups={};
+  data.forEach(a=>{(a.drugs||[]).forEach(d=>{const g=classifyDrug(d.name);pharmGroups[g]=(pharmGroups[g]||0)+1;});if(!(a.drugs||[]).length)pharmGroups['Không rõ']=(pharmGroups['Không rõ']||0)+1;});
+
+  const drugsMap={};
+  data.forEach(a=>{(a.drugs||[]).forEach(d=>{const name=(d.name||'').trim()||'Không rõ';if(!drugsMap[name])drugsMap[name]={cnt:0,route:d.route||''};drugsMap[name].cnt++;if(!drugsMap[name].route&&d.route)drugsMap[name].route=d.route;});});
+
+  const outcomes={};
+  data.forEach(a=>{const o=(a.outcome||'').trim()||'Chưa xác định';outcomes[o]=(outcomes[o]||0)+1;});
+
+  const totalDrugs=Object.values(drugsMap).reduce((s,v)=>s+v.cnt,0);
+  const totalRoutes=Object.values(routes).reduce((s,v)=>s+v,0);
+  const totalGroups=Object.values(pharmGroups).reduce((s,v)=>s+v,0);
+
+  const rowsOf = (obj,tot) => Object.entries(obj).filter(([,v])=>v>0).sort((a,b)=>b[1]-a[1])
+    .map(([k,v],i)=>`<tr><td>${i+1}</td><td>${k}</td><td align="center">${v}</td><td align="center">${pct(v,tot||total)}</td></tr>`).join('');
+
+  const monthRows = Object.entries(byMonth).filter(([,v])=>v>0)
+    .map(([m,v],i)=>`<tr><td>${i+1}</td><td>Tháng ${parseInt(m)}</td><td align="center">${v}</td><td align="center">${pct(v,total)}</td></tr>`).join('');
+
+  const topDrugs = Object.entries(drugsMap).sort((a,b)=>b[1].cnt-a[1].cnt).slice(0,20)
+    .map(([name,obj],i)=>`<tr><td>${i+1}</td><td>${name}</td><td align="center">${obj.route||'—'}</td><td align="center">${obj.cnt}</td><td align="center">${pct(obj.cnt,totalDrugs)}</td></tr>`).join('');
+
+  const now = new Date();
+  const dateStr = `${now.getDate()}/${now.getMonth()+1}/${now.getFullYear()}`;
+
+  const wordHtml = `<!DOCTYPE html>
+<html><head><meta charset="UTF-8">
+<style>
+  body{font-family:'Times New Roman',serif;font-size:12pt;line-height:1.6;margin:2cm 2.5cm;color:#1a1a1a}
+  h1{font-size:16pt;font-weight:bold;text-align:center;text-transform:uppercase;color:#1a1a1a;margin:0 0 10pt}
+  h2{font-size:13pt;font-weight:bold;margin:14pt 0 6pt}
+  h3{font-size:12pt;font-weight:bold;color:#0d9488;margin:12pt 0 4pt;border-left:4pt solid #0d9488;padding-left:6pt}
+  p{margin:4pt 0;text-align:justify}
+  table{border-collapse:collapse;width:100%;margin:6pt 0 12pt}
+  th{background:#0d9488;color:white;padding:5pt 8pt;font-size:11pt;text-align:center;border:1pt solid #555}
+  td{border:1pt solid #aaa;padding:4pt 8pt;font-size:11pt;vertical-align:top}
+  .tfoot td{background:#f0fdf4;font-weight:bold}
+  .note{font-style:italic;color:#555;font-size:11pt;margin:4pt 0 10pt}
+  .center{text-align:center}
+  .header-box{text-align:center;margin-bottom:24pt}
+  .sign-row{display:flex;justify-content:space-between;margin-top:48pt}
+  .sign-col{text-align:center;width:45%}
+</style>
+</head><body>
+<div class="header-box">
+  <p style="font-size:11pt;font-weight:bold;margin:0">BỆNH VIỆN ĐA KHOA HẢI HẬU</p>
+  <p style="font-size:11pt;font-weight:bold;margin:0">KHOA DƯỢC</p>
+  <br>
+  <h1>KHẢO SÁT BÁO CÁO PHẢN ỨNG CÓ HẠI CỦA THUỐC (ADR)</h1>
+  <h1>TẠI BỆNH VIỆN ĐA KHOA HUYỆN HẢI HẬU${year?' NĂM '+year:''}</h1>
+</div>
+
+<h2>1. TÓM TẮT</h2>
+<p>Chúng tôi đã tiến hành phân tích các báo cáo tự nguyện ADR tại Bệnh viện đa khoa huyện Hải Hậu${year?' trong năm '+year:''}, trên cơ sở đó đề xuất một số biện pháp nhằm nâng cao số lượng, chất lượng thông tin trong báo cáo và nhận thức của cán bộ y tế trong báo cáo ADR.</p>
+<p><strong>Kết quả:</strong> Tổng số báo cáo ADR được phân tích: <strong>${total} báo cáo</strong>.</p>
+
+<h2>2. ĐẶT VẤN ĐỀ</h2>
+<p>Phản ứng có hại của thuốc (Adverse Drug Reaction - ADR) là một vấn đề nổi cộm trong sử dụng thuốc. Để phòng tránh và giảm thiểu tác động của ADR cho bệnh nhân, việc xây dựng một cơ chế đánh giá và theo dõi an toàn thuốc trong thực hành lâm sàng là hết sức cần thiết.</p>
+
+<h2>3. KẾT QUẢ NGHIÊN CỨU</h2>
+<h3>3.1. Số lượng báo cáo ADR theo tháng</h3>
+<table>
+  <tr style="background:#0d9488;color:white"><th>STT</th><th>Tháng</th><th>Số báo cáo ADR</th><th>Tỷ lệ (%)</th></tr>
+  ${monthRows}
+  <tr class="tfoot"><td colspan="2">Tổng cộng</td><td align="center">${total}</td><td align="center">100%</td></tr>
+</table>
+
+<h3>3.2.1. Phân bố theo độ tuổi</h3>
+<p class="note">Bảng phân bố tuổi của bệnh nhân trong các báo cáo ADR</p>
+<table>
+  <tr style="background:#0d9488;color:white"><th>STT</th><th>Độ tuổi (năm)</th><th>Tần số</th><th>Tỷ lệ (%)</th></tr>
+  ${rowsOf(ageBuckets,total)}
+  <tr class="tfoot"><td colspan="2">Tổng cộng</td><td align="center">${total}</td><td align="center">100%</td></tr>
+</table>
+
+<h3>3.2.2. Phân bố theo giới tính</h3>
+<table>
+  <tr style="background:#0d9488;color:white"><th>STT</th><th>Giới tính</th><th>Số lượng</th><th>Tỷ lệ (%)</th></tr>
+  ${rowsOf(gender,total)}
+  <tr class="tfoot"><td colspan="2">Tổng cộng</td><td align="center">${total}</td><td align="center">100%</td></tr>
+</table>
+
+<h3>3.2.3. Tiền sử dị ứng</h3>
+<table>
+  <tr style="background:#0d9488;color:white"><th>STT</th><th>Dị ứng</th><th>Số lượng</th><th>Tỷ lệ (%)</th></tr>
+  ${rowsOf(allergy,total)}
+  <tr class="tfoot"><td colspan="2">Tổng cộng</td><td align="center">${total}</td><td align="center">100%</td></tr>
+</table>
+
+<h3>3.3.1. Đối tượng báo cáo ADR</h3>
+<table>
+  <tr style="background:#0d9488;color:white"><th>STT</th><th>Người báo cáo</th><th>Số lượng</th><th>Tỷ lệ (%)</th></tr>
+  ${rowsOf(reporters,total)}
+  <tr class="tfoot"><td colspan="2">Tổng cộng</td><td align="center">${total}</td><td align="center">100%</td></tr>
+</table>
+
+<h3>3.3.2. Khoa/phòng báo cáo ADR</h3>
+<table>
+  <tr style="background:#0d9488;color:white"><th>STT</th><th>Khoa/Phòng</th><th>Số lượng</th><th>Tỷ lệ (%)</th></tr>
+  ${rowsOf(depts,total)}
+  <tr class="tfoot"><td colspan="2">Tổng cộng</td><td align="center">${total}</td><td align="center">100%</td></tr>
+</table>
+
+<h3>3.4.1. Phân loại báo cáo ADR theo đường dùng thuốc</h3>
+<table>
+  <tr style="background:#0d9488;color:white"><th>STT</th><th>Đường dùng</th><th>Tần số</th><th>Tỷ lệ (%)</th></tr>
+  ${rowsOf(routes,totalRoutes)}
+  <tr class="tfoot"><td colspan="2">Tổng cộng</td><td align="center">${totalRoutes}</td><td align="center">100%</td></tr>
+</table>
+
+<h3>3.4.2. Nhóm dược lý hay được báo cáo</h3>
+<table>
+  <tr style="background:#0d9488;color:white"><th>STT</th><th>Nhóm dược lý</th><th>Số lượng</th><th>Tỷ lệ (%)</th></tr>
+  ${rowsOf(pharmGroups,totalGroups)}
+  <tr class="tfoot"><td colspan="2">Tổng cộng</td><td align="center">${totalGroups}</td><td align="center">100%</td></tr>
+</table>
+
+<h3>3.4.3. Các thuốc nghi ngờ gây ADR (Top 20)</h3>
+<table>
+  <tr style="background:#0d9488;color:white"><th>STT</th><th>Tên thuốc</th><th>Đường dùng</th><th>Số lượng</th><th>Tỷ lệ (%)</th></tr>
+  ${topDrugs}
+  <tr class="tfoot"><td colspan="3">Tổng cộng</td><td align="center">${totalDrugs}</td><td align="center">100%</td></tr>
+</table>
+
+<h3>3.5. Diễn biến của ADR đã được ghi nhận</h3>
+<table>
+  <tr style="background:#0d9488;color:white"><th>STT</th><th>Kết quả của ADR</th><th>Số lượng</th><th>Tỷ lệ (%)</th></tr>
+  ${rowsOf(outcomes,total)}
+  <tr class="tfoot"><td colspan="2">Tổng cộng</td><td align="center">${total}</td><td align="center">100%</td></tr>
+</table>
+
+<h2>4. KẾT LUẬN VÀ KIẾN NGHỊ</h2>
+<p>Qua kết quả phân tích ${total} báo cáo ADR${year?' năm '+year:''} tại Bệnh viện đa khoa huyện Hải Hậu, chúng tôi đề xuất một số biện pháp nhằm nâng cao số lượng, chất lượng thông tin trong báo cáo và nhận thức của cán bộ y tế trong báo cáo ADR tại đơn vị.</p>
+
+<div class="sign-row">
+  <div class="sign-col">
+    <p><strong>TRƯỞNG KHOA DƯỢC</strong></p>
+    <p style="margin-top:60pt">Ký tên, đóng dấu</p>
+  </div>
+  <div class="sign-col">
+    <p>Hải Hậu, ngày ${dateStr}</p>
+    <p><strong>NGƯỜI THỰC HIỆN</strong></p>
+    <p style="margin-top:48pt">DS. Đỗ Thanh Sơn</p>
+  </div>
+</div>
+</body></html>`;
+
+  const blob = new Blob(['﻿' + wordHtml], {type:'application/msword;charset=utf-8'});
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = `KhaoSat_ADR${year?'_'+year:''}_BVHaiHau.doc`;
+  document.body.appendChild(a);
+  a.click();
+  document.body.removeChild(a);
+  URL.revokeObjectURL(url);
+  showToast('Đã xuất Word phân tích ADR!');
+}
+// ===================== END PHÂN TÍCH ADR =====================
+
 function renderAdrTable() {
   renderAdrStats();
   const tbody = document.getElementById('adr-table');
@@ -4234,12 +4682,9 @@ function renderAdrTable() {
     return;
   }
 
-  // Sắp xếp theo tháng (mới nhất trước)
-  const sorted = [...adrs].sort((a, b) => {
-    const da = a.adrDate || a.reportDate || '';
-    const db = b.adrDate || b.reportDate || '';
-    return db.localeCompare(da);
-  });
+  // Sắp xếp theo số code giảm dần (ưu tiên số), cùng code thì theo ngày giảm dần
+  const codeNum = x => parseInt((x.code||'').match(/\d+/)?.[0]||0);
+  const sorted = [...adrs].sort((a, b) => codeNum(b) - codeNum(a));
 
   // Nhóm theo tháng
   const byMonth = {};
@@ -4250,6 +4695,9 @@ function renderAdrTable() {
     byMonth[key].push(a);
   });
 
+  // Sắp xếp các nhóm tháng giảm dần (tháng mới nhất trước)
+  const sortedMonthKeys = Object.keys(byMonth).sort((a, b) => b.localeCompare(a));
+
   const sevBadge = s => {
     if (!s) return 'badge-gray';
     if (s.includes('Tử vong') || s.includes('Đe dọa')) return 'badge-red';
@@ -4258,7 +4706,8 @@ function renderAdrTable() {
   };
 
   let html = '';
-  Object.entries(byMonth).forEach(([month, list]) => {
+  sortedMonthKeys.forEach(month => {
+    const list = byMonth[month];
     const [y, m] = month.split('-');
     const label = month === 'Không rõ' ? 'Không rõ tháng' : `Tháng ${parseInt(m)}/${y}`;
     html += `<tr><td colspan="10" style="background:#f0fdf4;padding:8px 14px;font-weight:700;font-size:12px;color:var(--teal);border-bottom:2px solid #6ee7b7">
