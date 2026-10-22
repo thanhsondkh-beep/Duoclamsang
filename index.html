@@ -1704,6 +1704,7 @@ div[class^="tiktok"].--savior-overlay-z-index-reset {
               </label>
               <button onclick="exportAntibioticWord()" id="ab-export-word" style="display:none;background:#3b82f6;color:white;border:none;padding:6px 14px;border-radius:8px;cursor:pointer;font-size:13px;font-weight:600">📄 Xuất Word</button>
               <button onclick="exportAntibioticExcel()" id="ab-export-excel" style="display:none;background:#16a34a;color:white;border:none;padding:6px 14px;border-radius:8px;cursor:pointer;font-size:13px;font-weight:600">📊 Xuất Excel</button>
+              <button onclick="clearAntibioticData()" id="ab-clear-btn" style="display:none;background:#ef4444;color:white;border:none;padding:6px 14px;border-radius:8px;cursor:pointer;font-size:13px;font-weight:600">🗑️ Xóa dữ liệu</button>
               <span id="ab-file-name" style="font-size:12px;color:#6b7280;font-style:italic"></span>
             </div>
           </div>
@@ -4888,10 +4889,60 @@ function exportAdrAnalysisWord() {
   let abData = [];   // {hoatChat, tenThuoc, hamLuong, dvt, soLuong, group, subgroup}
   let abFiltered = [];
 
+  const AB_STORAGE_KEY = 'dls_antibiotic_data';
+
+  function saveAntibioticToStorage(data, fileName) {
+    try {
+      const payload = { data, fileName, savedAt: new Date().toISOString() };
+      localStorage.setItem(AB_STORAGE_KEY, JSON.stringify(payload));
+    } catch(e) { /* quota exceeded hoặc private mode */ }
+  }
+
+  function loadAntibioticFromStorage() {
+    try {
+      const raw = localStorage.getItem(AB_STORAGE_KEY);
+      if (!raw) return null;
+      return JSON.parse(raw);
+    } catch(e) { return null; }
+  }
+
+  window.clearAntibioticData = function() {
+    try { localStorage.removeItem(AB_STORAGE_KEY); } catch(e) {}
+    abData = []; abFiltered = [];
+    document.getElementById('ab-file-name').textContent = '';
+    document.getElementById('ab-stats-bar').style.display = 'none';
+    document.getElementById('ab-filter-bar').style.display = 'none';
+    document.getElementById('ab-table-wrap').style.display = 'none';
+    document.getElementById('ab-empty').style.display = 'block';
+    document.getElementById('ab-export-word').style.display = 'none';
+    document.getElementById('ab-export-excel').style.display = 'none';
+    document.getElementById('ab-clear-btn').style.display = 'none';
+    showToast('Đã xóa dữ liệu kháng sinh khỏi bộ nhớ!');
+  };
+
+  // Auto-load khi trang khởi động
+  function initAntibioticStorage() {
+    const stored = loadAntibioticFromStorage();
+    if (stored && Array.isArray(stored.data) && stored.data.length > 0) {
+      abData = stored.data;
+      const d = new Date(stored.savedAt);
+      const dateStr = d.toLocaleDateString('vi-VN') + ' ' + d.toLocaleTimeString('vi-VN', {hour:'2-digit',minute:'2-digit'});
+      document.getElementById('ab-file-name').textContent = `📁 ${stored.fileName || 'Dữ liệu đã lưu'} — ${dateStr}`;
+      document.getElementById('ab-clear-btn').style.display = 'inline-block';
+      renderAntibioticTable(abData);
+    }
+  }
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', initAntibioticStorage);
+  } else {
+    initAntibioticStorage();
+  }
+
   window.loadAntibioticFile = function(input) {
     const file = input.files[0];
     if (!file) return;
-    document.getElementById('ab-file-name').textContent = file.name;
+    window._abCurrentFileName = file.name;
+    document.getElementById('ab-file-name').textContent = '⏳ Đang xử lý...';
     const reader = new FileReader();
     reader.onload = function(e) {
       try {
@@ -5009,8 +5060,13 @@ function exportAdrAnalysisWord() {
     }
 
     abData = result;
+    saveAntibioticToStorage(result, window._abCurrentFileName || '');
+    const d = new Date();
+    const dateStr = d.toLocaleDateString('vi-VN') + ' ' + d.toLocaleTimeString('vi-VN', {hour:'2-digit',minute:'2-digit'});
+    document.getElementById('ab-file-name').textContent = `📁 ${window._abCurrentFileName||''} — ${dateStr}`;
+    document.getElementById('ab-clear-btn').style.display = 'inline-block';
     renderAntibioticTable(result);
-    showToast(`Đã phân loại ${result.length} khoản kháng sinh!`);
+    showToast(`Đã phân loại ${result.length} khoản kháng sinh — đã lưu vào bộ nhớ!`);
   };
 
   function renderAntibioticTable(data) {
