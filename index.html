@@ -922,6 +922,9 @@ div[class^="tiktok"].--savior-overlay-z-index-reset {
   <div class="nav-item" onclick="goPage(&#39;renal&#39;)">
     <span class="icon">🫘</span> Hiệu chỉnh liều thận
   </div>
+  <div class="nav-item" onclick="goPage(&#39;antibiotic&#39;)">
+    <span class="icon">🦠</span> Tra cứu kháng sinh
+  </div>
 
   <div class="nav-section">Thông tin thuốc</div>
   <div class="nav-item" onclick="goPage(&#39;druginfo&#39;)">
@@ -1686,6 +1689,86 @@ div[class^="tiktok"].--savior-overlay-z-index-reset {
         </iframe>
       </div>
     </div><!-- end page-renal -->
+
+    <!-- TRA CỨU KHÁNG SINH PAGE -->
+    <div class="page" id="page-antibiotic">
+      <div style="padding:12px 16px">
+        <!-- Header upload -->
+        <div class="card" style="margin-bottom:12px">
+          <div class="card-header" style="background:linear-gradient(135deg,#ecfdf5,#d1fae5);border-bottom:2px solid #10b981">
+            <div class="card-title" style="color:#065f46;font-size:15px">🦠 Tra cứu & Phân loại Kháng sinh</div>
+            <div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center">
+              <label style="display:flex;align-items:center;gap:6px;background:#10b981;color:white;padding:6px 14px;border-radius:8px;cursor:pointer;font-size:13px;font-weight:600">
+                📂 Tải danh mục
+                <input type="file" id="ab-file-input" accept=".xlsx,.xls" style="display:none" onchange="loadAntibioticFile(this)">
+              </label>
+              <button onclick="exportAntibioticWord()" id="ab-export-word" style="display:none;background:#3b82f6;color:white;border:none;padding:6px 14px;border-radius:8px;cursor:pointer;font-size:13px;font-weight:600">📄 Xuất Word</button>
+              <button onclick="exportAntibioticExcel()" id="ab-export-excel" style="display:none;background:#16a34a;color:white;border:none;padding:6px 14px;border-radius:8px;cursor:pointer;font-size:13px;font-weight:600">📊 Xuất Excel</button>
+              <span id="ab-file-name" style="font-size:12px;color:#6b7280;font-style:italic"></span>
+            </div>
+          </div>
+          <!-- Stats bar -->
+          <div id="ab-stats-bar" style="display:none;padding:10px 16px;display:none;gap:12px;flex-wrap:wrap;background:#f0fdf4;border-bottom:1px solid #d1fae5" class="ab-stats-row">
+            <div id="ab-stat-total" style="background:white;border:1px solid #d1fae5;border-radius:8px;padding:6px 16px;text-align:center;min-width:100px">
+              <div style="font-size:20px;font-weight:700;color:#10b981" id="ab-total-count">0</div>
+              <div style="font-size:11px;color:#6b7280">Tổng khoản</div>
+            </div>
+            <div style="background:white;border:1px solid #d1fae5;border-radius:8px;padding:6px 16px;text-align:center;min-width:100px">
+              <div style="font-size:20px;font-weight:700;color:#0d9488" id="ab-group-count">0</div>
+              <div style="font-size:11px;color:#6b7280">Nhóm kháng sinh</div>
+            </div>
+            <div style="background:white;border:1px solid #fde68a;border-radius:8px;padding:6px 16px;text-align:center;min-width:100px">
+              <div style="font-size:20px;font-weight:700;color:#f59e0b" id="ab-betalactam-count">0</div>
+              <div style="font-size:11px;color:#6b7280">Beta-lactam</div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Bộ lọc -->
+        <div id="ab-filter-bar" style="display:none;margin-bottom:10px;display:flex;gap:8px;flex-wrap:wrap;align-items:center">
+          <input type="text" id="ab-search" placeholder="🔍 Tìm hoạt chất, tên thuốc..." oninput="filterAntibioticTable()"
+            style="flex:1;min-width:200px;padding:7px 12px;border:1px solid #d1d5db;border-radius:8px;font-size:13px">
+          <select id="ab-group-filter" onchange="filterAntibioticTable()"
+            style="padding:7px 12px;border:1px solid #d1d5db;border-radius:8px;font-size:13px;background:white">
+            <option value="">Tất cả nhóm</option>
+          </select>
+          <select id="ab-subgroup-filter" onchange="filterAntibioticTable()"
+            style="padding:7px 12px;border:1px solid #d1d5db;border-radius:8px;font-size:13px;background:white">
+            <option value="">Tất cả phân nhóm</option>
+          </select>
+          <span id="ab-result-count" style="font-size:12px;color:#6b7280;white-space:nowrap"></span>
+        </div>
+
+        <!-- Bảng kết quả -->
+        <div id="ab-table-wrap" style="display:none">
+          <div style="overflow-x:auto;border-radius:10px;box-shadow:0 1px 4px rgba(0,0,0,.08)">
+            <table style="width:100%;border-collapse:collapse;font-size:13px">
+              <thead>
+                <tr style="background:#10b981;color:white;position:sticky;top:0;z-index:2">
+                  <th style="padding:9px 10px;text-align:center;width:40px;white-space:nowrap">STT</th>
+                  <th style="padding:9px 10px;text-align:left;white-space:nowrap">Nhóm KS</th>
+                  <th style="padding:9px 10px;text-align:left;white-space:nowrap">Phân nhóm</th>
+                  <th style="padding:9px 10px;text-align:left">Hoạt chất</th>
+                  <th style="padding:9px 10px;text-align:left">Tên thuốc</th>
+                  <th style="padding:9px 10px;text-align:center;white-space:nowrap">Hàm lượng</th>
+                  <th style="padding:9px 10px;text-align:center;white-space:nowrap">ĐVT</th>
+                  <th style="padding:9px 10px;text-align:right;white-space:nowrap">Số lượng</th>
+                </tr>
+              </thead>
+              <tbody id="ab-tbody"></tbody>
+            </table>
+          </div>
+        </div>
+
+        <!-- Empty state -->
+        <div id="ab-empty" style="text-align:center;padding:60px 20px;color:#9ca3af">
+          <div style="font-size:48px;margin-bottom:12px">🦠</div>
+          <div style="font-size:15px;font-weight:600;margin-bottom:6px">Chưa có dữ liệu</div>
+          <div style="font-size:13px">Tải file Excel danh mục thuốc để phân loại kháng sinh</div>
+          <div style="font-size:12px;margin-top:8px;color:#d1d5db">Hỗ trợ: Biên bản kiểm kê, danh mục thầu (.xlsx, .xls)</div>
+        </div>
+      </div>
+    </div><!-- end page-antibiotic -->
 
     <!-- TƯƠNG TÁC PAGE -->
     <div class="page" id="page-tuongtac">
@@ -4149,7 +4232,8 @@ function renderAdrStats() {
 
 function exportAdrSummaryWord() {
   if (!adrs.length) { showToast('Chưa có báo cáo ADR nào!', false); return; }
-  const sorted = [...adrs].sort((a,b) => (b.adrDate||'').localeCompare(a.adrDate||''));
+  // Sắp xếp tăng dần theo ngày báo cáo (cũ nhất trước)
+  const sorted = [...adrs].sort((a,b) => (a.adrDate||'').localeCompare(b.adrDate||''));
   const border = 'border:1px solid #000;padding:4pt 7pt;font-size:10pt';
   const thStyle = 'border:1px solid #000;padding:4pt 7pt;background:#0d9488;color:white;font-weight:bold;font-size:10pt;text-align:center';
 
@@ -4163,7 +4247,7 @@ function exportAdrSummaryWord() {
     <td style="${border}">${a.outcome||'—'}</td>
     <td style="${border};text-align:center">${formatDate(a.adrDate)}</td>
     <td style="${border}">${a.reporter||'—'}</td>
-    <td style="${border}">${a.reportPlace||'—'}</td>
+    <td style="${border}">${a.dept||'—'}</td>
   </tr>`).join('');
 
   const now = new Date();
@@ -4215,7 +4299,7 @@ function exportAdrSummaryWord() {
 
 function exportAdrSummaryExcel() {
   if (!adrs.length) { showToast('Chưa có báo cáo ADR nào!', false); return; }
-  const sorted = [...adrs].sort((a,b) => (b.adrDate||'').localeCompare(a.adrDate||''));
+  const sorted = [...adrs].sort((a,b) => (a.adrDate||'').localeCompare(b.adrDate||''));
 
   const headers = ['STT','Tên bệnh nhân','Tuổi','Giới tính','Thuốc nghi ngờ','Biểu hiện ADR','Mức độ nghiêm trọng','Kết quả','Ngày báo cáo','Người báo cáo','Nơi báo cáo','Mã báo cáo'];
   const esc = v => {
@@ -4227,7 +4311,7 @@ function exportAdrSummaryExcel() {
     i+1, a.ptName||'', a.ptAge||'', a.ptGender||'',
     (a.drugs||[]).map(d=>d.name).filter(Boolean).join('; ')||'',
     a.description||'', a.severity||'', a.outcome||'',
-    formatDate(a.adrDate), a.reporter||'', a.reportPlace||'', a.code||''
+    formatDate(a.adrDate), a.reporter||'', a.dept||'', a.code||''
   ].map(esc).join(','));
 
   const csv = [headers.map(esc).join(','), ...rows].join('\r\n');
@@ -4672,6 +4756,440 @@ function exportAdrAnalysisWord() {
   showToast('Đã xuất Word phân tích ADR!');
 }
 // ===================== END PHÂN TÍCH ADR =====================
+
+// ===================== TRA CỨU KHÁNG SINH =====================
+(function() {
+  // ---- Bảng phân loại kháng sinh theo hoạt chất ----
+  // Mỗi entry: { group, subgroup, keywords[] }
+  const AB_CLASSES = [
+    // BETA-LACTAM — Penicillin
+    { group:'Beta-lactam', subgroup:'Penicillin phổ hẹp',
+      kw:['penicilin g','penicillin g','penicilin v','penicillin v','benzylpenicilin','phenoxymethylpenicilin'] },
+    { group:'Beta-lactam', subgroup:'Penicillin kháng penicilinase',
+      kw:['methicilin','oxacilin','oxacillin','cloxacilin','cloxacillin','dicloxacilin','dicloxacillin','nafcilin','nafcillin','flucloxacilin','flucloxacillin'] },
+    { group:'Beta-lactam', subgroup:'Aminopenicillin',
+      kw:['ampicilin','ampicillin','amoxicilin','amoxicillin','amoxiclav','co-amoxiclav','sultamicilin','sultamicillin','ampicilin+sulbactam','amoxicilin+clavulanat','acid clavulanic'] },
+    { group:'Beta-lactam', subgroup:'Penicillin phổ rộng (chống P. aeruginosa)',
+      kw:['piperacilin','piperacillin','ticarcilin','ticarcillin','carbenicilin','carbenicillin','mezlocilin','mezlocillin','piperacillin+tazobactam','piperacilin+tazobactam'] },
+    // BETA-LACTAM — Cephalosporin
+    { group:'Beta-lactam', subgroup:'Cephalosporin thế hệ 1',
+      kw:['cefalexin','cephalexin','cefazolin','cephalin','cefadroxil','cefradine','cefradin','cephalothin','cefalotin'] },
+    { group:'Beta-lactam', subgroup:'Cephalosporin thế hệ 2',
+      kw:['cefuroxim','cefuroxime','cefaclor','cefprozil','cefoxitin','cefoxitine','ceforanid','cefotetan','cefprozile'] },
+    { group:'Beta-lactam', subgroup:'Cephalosporin thế hệ 3',
+      kw:['cefotaxim','cefotaxime','ceftriaxon','ceftriaxone','ceftazidim','ceftazidime','cefoperazon','cefoperazone','cefpodoxim','cefpodoxime','cefdinir','ceftibuten','cefixim','cefix'] },
+    { group:'Beta-lactam', subgroup:'Cephalosporin thế hệ 4',
+      kw:['cefepim','cefepime','cefpirom','cefpirome'] },
+    { group:'Beta-lactam', subgroup:'Cephalosporin thế hệ 5',
+      kw:['ceftarolin','ceftaroline','ceftolozane'] },
+    // BETA-LACTAM — Carbapenem
+    { group:'Beta-lactam', subgroup:'Carbapenem',
+      kw:['imipenem','meropenem','doripenem','ertapenem','biapenem','panipenem'] },
+    // BETA-LACTAM — Monobactam
+    { group:'Beta-lactam', subgroup:'Monobactam',
+      kw:['aztreonam'] },
+    // AMINOGLYCOSID
+    { group:'Aminoglycosid', subgroup:'Aminoglycosid',
+      kw:['amikacin','gentamicin','tobramycin','netilmicin','neltimicin','kanamycin','streptomycin','neomycin','spectinomycin'] },
+    // MACROLID
+    { group:'Macrolid', subgroup:'Macrolid 14C',
+      kw:['erythromycin','roxithromycin','clarithromycin','dirithromycin','oleandomycin'] },
+    { group:'Macrolid', subgroup:'Macrolid 15C (Azalid)',
+      kw:['azithromycin'] },
+    { group:'Macrolid', subgroup:'Macrolid 16C',
+      kw:['spiramycin','josamycin','midecamycin'] },
+    // LINCOSAMID
+    { group:'Lincosamid', subgroup:'Lincosamid',
+      kw:['lincomycin','clindamycin'] },
+    // PHENICOL
+    { group:'Phenicol', subgroup:'Phenicol',
+      kw:['cloramphenicol','chloramphenicol','thiamphenicol'] },
+    // TETRACYCLIN / CYCLIN
+    { group:'Tetracyclin', subgroup:'Tetracyclin thế hệ 1',
+      kw:['tetracyclin','tetracycline','oxytetracyclin','chlortetracyclin','demeclocyclin'] },
+    { group:'Tetracyclin', subgroup:'Tetracyclin thế hệ 2',
+      kw:['doxycyclin','doxycycline','minocyclin','minocycline','methacyclin'] },
+    { group:'Tetracyclin', subgroup:'Tetracyclin thế hệ 3 (Glycylcyclin)',
+      kw:['tigecyclin','tigecycline'] },
+    // GLYCOPEPTID
+    { group:'Peptid', subgroup:'Glycopeptid',
+      kw:['vancomycin','teicoplanin','dalbavancin','oritavancin','televancin'] },
+    // POLYPEPTID
+    { group:'Peptid', subgroup:'Polypeptid',
+      kw:['polymyxin','colistin','bacitracin'] },
+    // LIPOPEPTID
+    { group:'Peptid', subgroup:'Lipopeptid',
+      kw:['daptomycin'] },
+    // QUINOLON
+    { group:'Quinolon', subgroup:'Quinolon thế hệ 1',
+      kw:['acid nalidixic','nalidixic','cinoxacin'] },
+    { group:'Quinolon', subgroup:'Quinolon thế hệ 2 (Fluoroquinolon)',
+      kw:['norfloxacin','lomefloxacin','enoxacin','ofloxacin','ciprofloxacin'] },
+    { group:'Quinolon', subgroup:'Quinolon thế hệ 3',
+      kw:['levofloxacin','sparfloxacin','gatifloxacin','grepafloxacin'] },
+    { group:'Quinolon', subgroup:'Quinolon thế hệ 4',
+      kw:['moxifloxacin','trovafloxacin'] },
+    // SULFONAMID
+    { group:'Sulfonamid & Trimethoprim', subgroup:'Sulfonamid',
+      kw:['sulfamethoxazol','sulfamethoxazole','co-trimoxazol','co-trimoxazole','trimethoprim','sulfadiazin','sulfadiazine','cotrimoxazol'] },
+    // OXAZOLIDINON
+    { group:'Oxazolidinon', subgroup:'Oxazolidinon',
+      kw:['linezolid','tedizolid'] },
+    // 5-NITROIMIDAZOL
+    { group:'5-Nitroimidazol', subgroup:'5-Nitroimidazol',
+      kw:['metronidazol','metronidazole','tinidazol','tinidazole','ornidazol','ornidazole','secnidazol','secnidazole'] },
+    // RIFAMYCIN
+    { group:'Rifamycin', subgroup:'Rifamycin',
+      kw:['rifampicin','rifampin','rifaximin','rifabutin'] },
+    // KHÁC
+    { group:'Kháng sinh khác', subgroup:'Nitrofuran',
+      kw:['nitrofurantoin','furazolidon','furazolidone'] },
+    { group:'Kháng sinh khác', subgroup:'Fosfomycin',
+      kw:['fosfomycin'] },
+    { group:'Kháng sinh khác', subgroup:'Mupirocin',
+      kw:['mupirocin'] },
+  ];
+
+  function classifyAntibiotic(activeIngredient) {
+    const s = (activeIngredient||'').toLowerCase()
+      .normalize('NFD').replace(/[̀-ͯ]/g,'') // bỏ dấu để so sánh
+      .replace(/[^a-z0-9\s\+\-]/g,' ');
+    for (const cls of AB_CLASSES) {
+      for (const kw of cls.kw) {
+        if (s.includes(kw)) return cls;
+      }
+    }
+    return null;
+  }
+
+  // Màu badge cho từng nhóm
+  const GROUP_COLORS = {
+    'Beta-lactam':            { bg:'#dbeafe', text:'#1e40af', border:'#93c5fd' },
+    'Aminoglycosid':          { bg:'#fef3c7', text:'#92400e', border:'#fcd34d' },
+    'Macrolid':               { bg:'#ede9fe', text:'#5b21b6', border:'#c4b5fd' },
+    'Lincosamid':             { bg:'#fce7f3', text:'#9d174d', border:'#f9a8d4' },
+    'Phenicol':               { bg:'#fee2e2', text:'#991b1b', border:'#fca5a5' },
+    'Tetracyclin':            { bg:'#fff7ed', text:'#9a3412', border:'#fdba74' },
+    'Peptid':                 { bg:'#d1fae5', text:'#065f46', border:'#6ee7b7' },
+    'Quinolon':               { bg:'#e0f2fe', text:'#0c4a6e', border:'#7dd3fc' },
+    'Sulfonamid & Trimethoprim':{ bg:'#f0fdf4', text:'#14532d', border:'#86efac' },
+    'Oxazolidinon':           { bg:'#fdf4ff', text:'#701a75', border:'#e879f9' },
+    '5-Nitroimidazol':        { bg:'#fff1f2', text:'#881337', border:'#fda4af' },
+    'Rifamycin':              { bg:'#fefce8', text:'#713f12', border:'#fde047' },
+    'Kháng sinh khác':        { bg:'#f3f4f6', text:'#374151', border:'#d1d5db' },
+  };
+
+  function groupBadge(group) {
+    const c = GROUP_COLORS[group] || GROUP_COLORS['Kháng sinh khác'];
+    return `<span style="display:inline-block;padding:2px 8px;border-radius:12px;font-size:11px;font-weight:700;background:${c.bg};color:${c.text};border:1px solid ${c.border};white-space:nowrap">${group}</span>`;
+  }
+
+  // Dữ liệu hiện tại
+  let abData = [];   // {hoatChat, tenThuoc, hamLuong, dvt, soLuong, group, subgroup}
+  let abFiltered = [];
+
+  window.loadAntibioticFile = function(input) {
+    const file = input.files[0];
+    if (!file) return;
+    document.getElementById('ab-file-name').textContent = file.name;
+    const reader = new FileReader();
+    reader.onload = function(e) {
+      try {
+        // Dùng SheetJS nếu có, không thì parse thô từ binary
+        if (typeof XLSX !== 'undefined') {
+          parseWithXLSX(e.target.result);
+        } else {
+          // Load SheetJS từ CDN
+          const script = document.createElement('script');
+          script.src = 'https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js';
+          script.onload = () => parseWithXLSX(e.target.result);
+          script.onerror = () => showToast('Không tải được thư viện đọc Excel!', false);
+          document.head.appendChild(script);
+          window._abPendingData = e.target.result;
+        }
+      } catch(err) {
+        showToast('Lỗi đọc file: ' + err.message, false);
+      }
+    };
+    reader.readAsArrayBuffer(file);
+  };
+
+  function parseWithXLSX(buffer) {
+    const wb = XLSX.read(buffer, { type:'array', cellDates:true });
+    const ws = wb.Sheets[wb.SheetNames[0]];
+    const rows = XLSX.utils.sheet_to_json(ws, { header:1, defval:'' });
+
+    // Tìm dòng header (chứa cột "hoạt chất" và "tên thuốc")
+    let headerRow = -1;
+    let colMap = {};
+    for (let i = 0; i < Math.min(rows.length, 20); i++) {
+      const r = rows[i].map(c => String(c).toLowerCase().trim()
+        .normalize('NFD').replace(/[̀-ͯ]/g,''));
+      // Tìm cột hoạt chất
+      const iHC = r.findIndex(c => c.includes('hoat chat') || c.includes('hoatchat'));
+      const iTen = r.findIndex(c => (c.includes('ten thuoc') || c.includes('tenthuoc')) && !c.includes('hoat'));
+      const iHL = r.findIndex(c => c.includes('ham luong') || c.includes('hamluong') || c.includes('nong do'));
+      const iDVT = r.findIndex(c => c.includes('don vi') || c.includes('donvi') || c === 'dvt');
+      const iSL = r.findIndex(c => (c.includes('so luong') || c.includes('soluong') || c.includes('thuc te') || c === 'sl') && !c.includes('so san'));
+
+      if (iHC >= 0 || iTen >= 0) {
+        headerRow = i;
+        // Fallback: tên thuốc ở cột index 4 nếu không tìm được (cấu trúc biên bản kiểm kê)
+        colMap = {
+          hoatChat: iHC >= 0 ? iHC : (rows[i].findIndex((c,idx) => String(c).includes('hoạt chất') || String(c).toLowerCase().includes('ho') && idx > 3) || 5),
+          tenThuoc: iTen >= 0 ? iTen : 4,
+          hamLuong: iHL >= 0 ? iHL : 6,
+          dvt: iDVT >= 0 ? iDVT : 7,
+          soLuong: iSL >= 0 ? iSL : 19,
+        };
+        break;
+      }
+    }
+
+    // Nếu không tìm được header, thử phát hiện từ cột tên
+    if (headerRow < 0) {
+      for (let i = 0; i < Math.min(rows.length, 25); i++) {
+        const r = rows[i];
+        const rStr = r.map(c => String(c||'').toLowerCase());
+        if (rStr.some(c => c.includes('hoạt chất') || c.includes('hoat chat'))) {
+          headerRow = i;
+          const hcIdx = rStr.findIndex(c => c.includes('hoạt chất') || c.includes('hoat chat'));
+          const tenIdx = rStr.findIndex((c,idx) => (c.includes('tên thuốc') || c.includes('ten thuoc') || c.includes('tên thuoc')) && idx !== hcIdx);
+          const hlIdx = rStr.findIndex(c => c.includes('hàm lượng') || c.includes('ham luong') || c.includes('nồng độ'));
+          const dvtIdx = rStr.findIndex(c => c.includes('đơn vị') || c.includes('don vi'));
+          const slIdx = rStr.findLastIndex(c => c.includes('số lượng') || c.includes('thực tế') || c.includes('so luong'));
+          colMap = { hoatChat: hcIdx, tenThuoc: tenIdx >= 0 ? tenIdx : 4, hamLuong: hlIdx >= 0 ? hlIdx : 6, dvt: dvtIdx >= 0 ? dvtIdx : 7, soLuong: slIdx >= 0 ? slIdx : 19 };
+          break;
+        }
+      }
+    }
+
+    if (headerRow < 0) {
+      // Cấu trúc mặc định biên bản kiểm kê: STT(0) Mã(1) MãBHYT(2) TênNồng độHL(3) TênThuốc(4) HoạtChất(5) HàmLượng(6) ĐVT(7) ... SLSổSách(18) SLThựcTế(19)
+      headerRow = 14; // thường dòng 15 (index 14)
+      colMap = { hoatChat:5, tenThuoc:4, hamLuong:6, dvt:7, soLuong:19 };
+    }
+
+    const result = [];
+    for (let i = headerRow + 1; i < rows.length; i++) {
+      const r = rows[i];
+      if (!r || r.every(c => c === '' || c === null || c === undefined)) continue;
+
+      // Bỏ dòng tổng kết / ký tên
+      const firstCell = String(r[0]||'').trim();
+      if (!firstCell || isNaN(Number(firstCell))) {
+        if (String(r[colMap.hoatChat]||'').trim() === '' &&
+            String(r[colMap.tenThuoc]||'').trim() === '') continue;
+      }
+
+      const hoatChat = String(r[colMap.hoatChat]||'').trim();
+      const tenThuoc = String(r[colMap.tenThuoc]||'').trim();
+      if (!hoatChat && !tenThuoc) continue;
+
+      // Phân loại
+      const cls = classifyAntibiotic(hoatChat) || classifyAntibiotic(tenThuoc);
+      if (!cls) continue; // Bỏ qua không phải kháng sinh
+
+      const soLuong = Number(String(r[colMap.soLuong]||'0').replace(/[^0-9\.\-]/g,'')) || 0;
+      if (soLuong < 0) continue; // bỏ dòng âm (điều chỉnh tồn kho)
+
+      result.push({
+        hoatChat, tenThuoc,
+        hamLuong: String(r[colMap.hamLuong]||'').trim(),
+        dvt: String(r[colMap.dvt]||'').trim(),
+        soLuong,
+        group: cls.group,
+        subgroup: cls.subgroup,
+      });
+    }
+
+    if (!result.length) {
+      showToast('Không tìm thấy kháng sinh nào trong danh mục. Kiểm tra lại định dạng file!', false);
+      return;
+    }
+
+    abData = result;
+    renderAntibioticTable(result);
+    showToast(`Đã phân loại ${result.length} khoản kháng sinh!`);
+  };
+
+  function renderAntibioticTable(data) {
+    abFiltered = data;
+    const groups = [...new Set(data.map(d=>d.group))].sort();
+    // Cập nhật filter dropdown nhóm
+    const gSel = document.getElementById('ab-group-filter');
+    gSel.innerHTML = '<option value="">Tất cả nhóm</option>' + groups.map(g=>`<option value="${g}">${g}</option>`).join('');
+
+    // Stats
+    const betalactam = data.filter(d=>d.group==='Beta-lactam').length;
+    document.getElementById('ab-total-count').textContent = data.length;
+    document.getElementById('ab-group-count').textContent = groups.length;
+    document.getElementById('ab-betalactam-count').textContent = betalactam;
+
+    // Hiện/ẩn
+    document.getElementById('ab-stats-bar').style.display = 'flex';
+    document.getElementById('ab-filter-bar').style.display = 'flex';
+    document.getElementById('ab-table-wrap').style.display = 'block';
+    document.getElementById('ab-empty').style.display = 'none';
+    document.getElementById('ab-export-word').style.display = 'inline-block';
+    document.getElementById('ab-export-excel').style.display = 'inline-block';
+
+    renderAbTbody(data);
+  }
+
+  function renderAbTbody(data) {
+    const tbody = document.getElementById('ab-tbody');
+    if (!data.length) {
+      tbody.innerHTML = '<tr><td colspan="8" style="text-align:center;padding:24px;color:#9ca3af">Không có kháng sinh nào phù hợp với bộ lọc</td></tr>';
+      document.getElementById('ab-result-count').textContent = '(0 kết quả)';
+      return;
+    }
+    // Sắp xếp: theo nhóm → phân nhóm → hoạt chất
+    const sorted = [...data].sort((a,b) => {
+      if (a.group !== b.group) return a.group.localeCompare(b.group,'vi');
+      if (a.subgroup !== b.subgroup) return a.subgroup.localeCompare(b.subgroup,'vi');
+      return (a.hoatChat||'').localeCompare(b.hoatChat||'','vi');
+    });
+
+    let html = '';
+    let lastGroup = '';
+    let stt = 1;
+    sorted.forEach(d => {
+      const isNewGroup = d.group !== lastGroup;
+      if (isNewGroup) {
+        lastGroup = d.group;
+        const c = GROUP_COLORS[d.group] || GROUP_COLORS['Kháng sinh khác'];
+        html += `<tr><td colspan="8" style="background:${c.bg};padding:7px 12px;font-weight:700;font-size:12px;color:${c.text};border-bottom:2px solid ${c.border}">
+          ${groupBadge(d.group)} &nbsp;— ${sorted.filter(x=>x.group===d.group).length} khoản
+        </td></tr>`;
+      }
+      const rowBg = stt % 2 === 0 ? '#f9fafb' : 'white';
+      html += `<tr style="background:${rowBg}">
+        <td style="padding:7px 10px;text-align:center;color:#9ca3af;font-size:12px">${stt++}</td>
+        <td style="padding:7px 10px">${groupBadge(d.group)}</td>
+        <td style="padding:7px 10px;font-size:12px;color:#6b7280">${d.subgroup}</td>
+        <td style="padding:7px 10px;font-weight:600;color:#065f46">${d.hoatChat||'—'}</td>
+        <td style="padding:7px 10px">${d.tenThuoc||'—'}</td>
+        <td style="padding:7px 10px;text-align:center;font-size:12px">${d.hamLuong||'—'}</td>
+        <td style="padding:7px 10px;text-align:center;font-size:12px;color:#6b7280">${d.dvt||'—'}</td>
+        <td style="padding:7px 10px;text-align:right;font-weight:600;color:#1e40af">${d.soLuong.toLocaleString('vi-VN')}</td>
+      </tr>`;
+    });
+    tbody.innerHTML = html;
+    document.getElementById('ab-result-count').textContent = `(${data.length} khoản)`;
+  }
+
+  window.filterAntibioticTable = function() {
+    const q = (document.getElementById('ab-search')?.value||'').toLowerCase().trim();
+    const gf = document.getElementById('ab-group-filter')?.value||'';
+    const sf = document.getElementById('ab-subgroup-filter')?.value||'';
+
+    let filtered = abData;
+    if (gf) {
+      filtered = filtered.filter(d=>d.group===gf);
+      // Cập nhật phân nhóm filter
+      const subs = [...new Set(filtered.map(d=>d.subgroup))].sort();
+      const sSel = document.getElementById('ab-subgroup-filter');
+      const curSub = sSel.value;
+      sSel.innerHTML = '<option value="">Tất cả phân nhóm</option>' + subs.map(s=>`<option value="${s}" ${s===curSub?'selected':''}>${s}</option>`).join('');
+    }
+    if (sf) filtered = filtered.filter(d=>d.subgroup===sf);
+    if (q) filtered = filtered.filter(d =>
+      (d.hoatChat||'').toLowerCase().includes(q) ||
+      (d.tenThuoc||'').toLowerCase().includes(q) ||
+      (d.subgroup||'').toLowerCase().includes(q)
+    );
+    renderAbTbody(filtered);
+  };
+
+  // ---- Xuất Word ----
+  window.exportAntibioticWord = function() {
+    if (!abData.length) return;
+    const sorted = [...abData].sort((a,b) => {
+      if (a.group !== b.group) return a.group.localeCompare(b.group,'vi');
+      if (a.subgroup !== b.subgroup) return a.subgroup.localeCompare(b.subgroup,'vi');
+      return (a.hoatChat||'').localeCompare(b.hoatChat||'','vi');
+    });
+    const border = 'border:1px solid #000;padding:4pt 6pt;font-size:10pt';
+    const thStyle = 'border:1px solid #000;padding:4pt 6pt;background:#10b981;color:white;font-weight:bold;font-size:10pt;text-align:center';
+    const groups = [...new Set(sorted.map(d=>d.group))];
+
+    let rows = '';
+    let stt = 1;
+    let lastGroup = '';
+    sorted.forEach(d => {
+      if (d.group !== lastGroup) {
+        lastGroup = d.group;
+        rows += `<tr><td colspan="7" style="${border};background:#d1fae5;font-weight:bold;font-size:11pt;color:#065f46">${d.group} — ${sorted.filter(x=>x.group===d.group).length} khoản</td></tr>`;
+      }
+      rows += `<tr>
+        <td style="${border};text-align:center">${stt++}</td>
+        <td style="${border};font-size:9pt;color:#374151">${d.subgroup}</td>
+        <td style="${border};font-weight:bold">${d.hoatChat||'—'}</td>
+        <td style="${border}">${d.tenThuoc||'—'}</td>
+        <td style="${border};text-align:center">${d.hamLuong||'—'}</td>
+        <td style="${border};text-align:center">${d.dvt||'—'}</td>
+        <td style="${border};text-align:right">${d.soLuong.toLocaleString('vi-VN')}</td>
+      </tr>`;
+    });
+
+    const now = new Date();
+    const html = `<!DOCTYPE html><html><head><meta charset="UTF-8">
+<style>@page{margin:2cm 2cm 2cm 2.5cm}body{font-family:'Times New Roman',serif;font-size:11pt}table{width:100%;border-collapse:collapse}</style>
+</head><body>
+<div style="text-align:center;margin-bottom:4pt"><div style="font-weight:bold">BỆNH VIỆN ĐA KHOA HẢI HẬU — KHOA DƯỢC</div></div>
+<h2 style="text-align:center;font-size:13pt;text-transform:uppercase;margin:4pt 0">DANH MỤC KHÁNG SINH THEO NHÓM</h2>
+<div style="text-align:center;font-size:10pt;margin-bottom:10pt">Tổng số: <strong>${abData.length} khoản</strong> | ${groups.length} nhóm kháng sinh | Ngày: ${now.toLocaleDateString('vi-VN')}</div>
+<table>
+  <thead><tr>
+    <th style="${thStyle};width:4%">STT</th>
+    <th style="${thStyle};width:15%">Phân nhóm</th>
+    <th style="${thStyle}">Hoạt chất</th>
+    <th style="${thStyle}">Tên thuốc</th>
+    <th style="${thStyle};width:10%">Hàm lượng</th>
+    <th style="${thStyle};width:7%">ĐVT</th>
+    <th style="${thStyle};width:9%">Số lượng</th>
+  </tr></thead>
+  <tbody>${rows}</tbody>
+</table>
+<div style="margin-top:24pt;display:flex;justify-content:flex-end">
+  <div style="text-align:center;width:40%">
+    <div style="font-weight:bold">TRƯỞNG KHOA DƯỢC</div>
+    <div style="font-style:italic;font-size:10pt;margin-bottom:40pt">(Ký và ghi rõ họ tên)</div>
+    <div>.................................</div>
+  </div>
+</div>
+</body></html>`;
+    const blob = new Blob(['﻿'+html],{type:'application/msword;charset=utf-8'});
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href=url; a.download=`KhangSinh_PhanLoai_${now.getFullYear()}${String(now.getMonth()+1).padStart(2,'0')}.doc`;
+    a.click(); URL.revokeObjectURL(url);
+    showToast('Đã xuất Word danh mục kháng sinh!');
+  };
+
+  // ---- Xuất Excel (CSV) ----
+  window.exportAntibioticExcel = function() {
+    if (!abData.length) return;
+    const sorted = [...abData].sort((a,b) => {
+      if (a.group !== b.group) return a.group.localeCompare(b.group,'vi');
+      if (a.subgroup !== b.subgroup) return a.subgroup.localeCompare(b.subgroup,'vi');
+      return (a.hoatChat||'').localeCompare(b.hoatChat||'','vi');
+    });
+    const esc = v => { const s=String(v==null?'':v).replace(/"/g,'""'); return s.includes(',')||s.includes('"')||s.includes('\n')?`"${s}"`:s; };
+    const headers = ['STT','Nhóm kháng sinh','Phân nhóm','Hoạt chất','Tên thuốc','Hàm lượng','Đơn vị tính','Số lượng'];
+    const rows = sorted.map((d,i) => [i+1,d.group,d.subgroup,d.hoatChat,d.tenThuoc,d.hamLuong,d.dvt,d.soLuong].map(esc).join(','));
+    const csv = [headers.map(esc).join(','),...rows].join('\r\n');
+    const blob = new Blob(['﻿'+csv],{type:'text/csv;charset=utf-8'});
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    const now = new Date();
+    a.href=url; a.download=`KhangSinh_PhanLoai_${now.getFullYear()}${String(now.getMonth()+1).padStart(2,'0')}.csv`;
+    a.click(); URL.revokeObjectURL(url);
+    showToast('Đã xuất Excel danh mục kháng sinh!');
+  };
+})();
+// ===================== END TRA CỨU KHÁNG SINH =====================
 
 function renderAdrTable() {
   renderAdrStats();
